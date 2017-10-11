@@ -2,9 +2,7 @@
 name = "processing"
 version = "0.1.0"
 authors = ["Robert Ennis <Robert.Ennis@psychol.uni-giessen.de>"]
-description = "An implementation the Processing environment for Rust, with influences from
-               Cinder and openFrameworks. It is written with Glium and has a Glutin and a
-               GLFW backend. Tested so far on macOS and Linux."
+description = "An implementation the Processing environment for Rust, with influences from Cinder and openFrameworks. It is written with Glium and has a Glutin and a GLFW backend. Tested so far on macOS and Linux."
 license = "MIT"
 
 [dependencies]
