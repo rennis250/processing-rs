@@ -11,6 +11,10 @@ description = """
 license = "MIT"
 repository = "https://github.com/rennis250/processing-rs"
 keywords = ["processing", "opengl", "generative", "art", "psychophysics"]
+exclude = [
+  "benches/*",
+  "test.jpg"
+]
 
 [dependencies]
 glium = "0.18.0"
