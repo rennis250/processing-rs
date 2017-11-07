@@ -6,7 +6,7 @@ description = """
   An implementation of the Processing environment for Rust, with influences from Cinder and
   openFrameworks. It is written with Glium and has a Glutin and a GLFW backend. Tested so far
   on macOS and Linux. It has been developed by Robert Ennis in the lab of Katja Doerschner,
-  a part of the Allgemeine Psychologe Department at the Justus-Liebig Universitaet of Giessen.
+  a part of the Allgemeine Psychologie Department at the Justus-Liebig Universitaet of Giessen.
 """
 license = "MIT"
 repository = "https://github.com/rennis250/processing-rs"
