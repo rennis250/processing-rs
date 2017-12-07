@@ -3,7 +3,7 @@ use std::f32;
 use glium;
 use glium::uniforms::Uniforms;
 
-use Screen;
+use {Screen, ScreenType};
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
@@ -129,8 +129,14 @@ impl Line {
                 }
             }
 
-            let fill_shape_buffer = glium::VertexBuffer::new(&screen.display, &shape).unwrap();
-            let stroke_shape_buffer = glium::VertexBuffer::new(&screen.display, &shape).unwrap();
+            let fill_shape_buffer = match screen.display {
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            };
+            let stroke_shape_buffer = match screen.display {
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            };
 
             return Line {
                 fill_buffer: fill_shape_buffer,
@@ -145,8 +151,14 @@ impl Line {
         }
 
         return Line {
-            fill_buffer: glium::VertexBuffer::new(&screen.display, &vec![]).unwrap(),
-            stroke_buffer: glium::VertexBuffer::new(&screen.display, &vec![]).unwrap(),
+            fill_buffer: match screen.display {
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
+            },
+            stroke_buffer: match screen.display {
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
+            },
             fill_index_buffer: IndexType::NoBuffer {
                 ind: glium::index::NoIndices(glium::index::PrimitiveType::LinesList),
             },

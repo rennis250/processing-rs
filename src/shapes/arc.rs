@@ -2,7 +2,7 @@ use std::f32;
 
 use glium;
 
-use Screen;
+use {Screen, ScreenType};
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
@@ -141,11 +141,20 @@ impl Arc {
         }
 
         load_colors(&mut shape, &screen.fillCol);
-        let fill_shape_buffer = glium::VertexBuffer::new(&screen.display, &shape).unwrap();
+        let fill_shape_buffer = match screen.display {
+            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+        };
 
         load_colors(&mut shape, &screen.strokeCol);
-        let stroke_shape_buffer =
-            glium::VertexBuffer::new(&screen.display, &shape[1..shape.len() - 1]).unwrap();
+        let stroke_shape_buffer = match screen.display {
+            ScreenType::Window(ref d) => {
+                glium::VertexBuffer::new(d, &shape[1..shape.len() - 1]).unwrap()
+            }
+            ScreenType::Headless(ref d) => {
+                glium::VertexBuffer::new(d, &shape[1..shape.len() - 1]).unwrap()
+            }
+        };
 
         Arc {
             fill_buffer: fill_shape_buffer,

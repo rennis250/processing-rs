@@ -6,6 +6,7 @@ extern crate nalgebra;
 extern crate image as image_ext;
 extern crate owning_ref;
 
+
 #[cfg(target_os = "macos")]
 #[macro_use]
 extern crate objc;
@@ -80,13 +81,18 @@ pub struct DFBFDVertex {
 
 implement_vertex!(DFBFDVertex, position, texcoord);
 
+enum ScreenType {
+    Window(glium::Display),
+    Headless(glium::HeadlessRenderer),
+}
+
 #[cfg(not(feature = "glfw"))]
 pub struct Screen<'a> {
     FBTexture: glium::texture::Texture2d,
     fb_shape_buffer: glium::VertexBuffer<DFBFDVertex>,
     fb_index_buffer: glium::index::IndexBuffer<u16>,
     FBO: owning_ref::OwningHandle<Box<FBtexs>, Box<glium::framebuffer::SimpleFrameBuffer<'a>>>,
-    display: glium::Display,
+    display: ScreenType,
     events_loop: glutin::EventsLoop,
     draw_params: glium::draw_parameters::DrawParameters<'a>,
     pub matrices: GLmatStruct,
@@ -132,6 +138,7 @@ pub struct Screen<'a> {
     mousepressed: Option<glutin::MouseButton>,
     mousereleased: Option<glutin::MouseButton>,
     mousepos: (f64, f64),
+    headless: bool,
 }
 
 #[cfg(feature = "glfw")]
@@ -191,6 +198,7 @@ pub struct Screen<'a> {
     mousepressed: Option<glfw::MouseButton>,
     mousereleased: Option<glfw::MouseButton>,
     mousepos: (f64, f64),
+    headless: bool,
 }
 
 // #[derive(Default)]
@@ -210,7 +218,8 @@ extern "C" {
 
 #[cfg(target_os = "macos")]
 fn mac_priority() {
-    // Prevent display from sleeping/powering down, prevent system from sleeping, prevent sudden termination for any reason:
+    // Prevent display from sleeping/powering down, prevent system
+    // from sleeping, prevent sudden termination for any reason:
     let NSActivityIdleDisplaySleepDisabled = (1u64 << 40);
     let NSActivityIdleSystemSleepDisabled = (1u64 << 20);
     let NSActivitySuddenTerminationDisabled = (1u64 << 14);

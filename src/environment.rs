@@ -1,15 +1,20 @@
 use glium;
 use glium::glutin;
 
-use Screen;
+use {Screen, ScreenType};
 
 impl<'a> Screen<'a> {
     #[inline]
     pub fn reset_cursor(&mut self) {
         self.currCursor = glium::glutin::MouseCursor::Default;
-        self.display.gl_window().set_cursor(
-            glium::glutin::MouseCursor::Default,
-        );
+        match self.display {
+            ScreenType::Window(ref d) => {
+                (*d).gl_window().set_cursor(
+                    glium::glutin::MouseCursor::Default,
+                )
+            }
+            _ => (),
+        };
     }
 
     #[inline]
@@ -28,7 +33,10 @@ impl<'a> Screen<'a> {
         } else if cursorType == "WAIT" {
             self.currCursor = glium::glutin::MouseCursor::Wait;
         }
-        self.display.gl_window().set_cursor(self.currCursor);
+        match self.display {
+            ScreenType::Window(ref d) => (*d).gl_window().set_cursor(self.currCursor),
+            _ => (),
+        };
     }
 
     #[inline]

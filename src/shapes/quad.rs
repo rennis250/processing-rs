@@ -2,7 +2,7 @@ use std::f32;
 
 use glium;
 
-use Screen;
+use {Screen, ScreenType};
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
@@ -162,17 +162,28 @@ impl<'a> Quad<'a> {
             index += 6;
         }
 
-        let index_buffer = glium::IndexBuffer::new(
-            &screen.display,
-            glium::index::PrimitiveType::TrianglesList,
-            &elements,
-        ).unwrap();
+        let index_buffer = match screen.display {
+            ScreenType::Window(ref d) => {
+                glium::IndexBuffer::new(d, glium::index::PrimitiveType::TrianglesList, &elements)
+                    .unwrap()
+            }
+            ScreenType::Headless(ref d) => {
+                glium::IndexBuffer::new(d, glium::index::PrimitiveType::TrianglesList, &elements)
+                    .unwrap()
+            }
+        };
 
         load_colors(&mut shape, &screen.fillCol);
-        let fill_shape_buffer = glium::VertexBuffer::new(&screen.display, &shape).unwrap();
+        let fill_shape_buffer = match screen.display {
+            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+        };
 
         load_colors(&mut shape, &screen.strokeCol);
-        let stroke_shape_buffer = glium::VertexBuffer::new(&screen.display, &shape).unwrap();
+        let stroke_shape_buffer = match screen.display {
+            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+        };
 
         // screen.draw(fill_shape_buffer, stroke_shape_buffer, Some(index_buffer));
         Quad {

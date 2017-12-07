@@ -7,7 +7,7 @@ use glium::uniforms::Uniforms;
 //use rand;
 //use rand::Rng;
 
-use Screen;
+use {Screen, ScreenType};
 
 #[derive(Clone, Debug)]
 pub struct ShaderInfo<U: Uniforms> {
@@ -134,19 +134,38 @@ impl<'a> Screen<'a> {
     }
     ";
 
-        let program = glium::Program::new(
-            &self.display,
-            glium::program::ProgramCreationInput::SourceCode {
-                vertex_shader: &vsh,
-                tessellation_control_shader: None,
-                tessellation_evaluation_shader: None,
-                geometry_shader: None,
-                fragment_shader: &fsh,
-                transform_feedback_varyings: None,
-                outputs_srgb: true,
-                uses_point_size: true,
-            },
-        ).unwrap();
+        let program = match self.display {
+            ScreenType::Window(ref d) => {
+                glium::Program::new(
+                    d,
+                    glium::program::ProgramCreationInput::SourceCode {
+                        vertex_shader: &vsh,
+                        tessellation_control_shader: None,
+                        tessellation_evaluation_shader: None,
+                        geometry_shader: None,
+                        fragment_shader: &fsh,
+                        transform_feedback_varyings: None,
+                        outputs_srgb: true,
+                        uses_point_size: true,
+                    },
+                ).unwrap()
+            }
+            ScreenType::Headless(ref d) => {
+                glium::Program::new(
+                    d,
+                    glium::program::ProgramCreationInput::SourceCode {
+                        vertex_shader: &vsh,
+                        tessellation_control_shader: None,
+                        tessellation_evaluation_shader: None,
+                        geometry_shader: None,
+                        fragment_shader: &fsh,
+                        transform_feedback_varyings: None,
+                        outputs_srgb: true,
+                        uses_point_size: true,
+                    },
+                ).unwrap()
+            }
+        };
         self.shader_bank.push(program);
 
         ShaderInfo {

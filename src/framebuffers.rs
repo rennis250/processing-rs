@@ -4,7 +4,7 @@ use glium::uniforms::Uniforms;
 
 use shapes::{Shape, IndexType};
 use shapes::mould::Mould;
-use Screen;
+use {Screen, ScreenType};
 
 impl<'a> Screen<'a> {
     #[inline]
@@ -12,7 +12,14 @@ impl<'a> Screen<'a> {
         &self,
         fbtex: &'a glium::texture::Texture2d,
     ) -> glium::framebuffer::SimpleFrameBuffer {
-        glium::framebuffer::SimpleFrameBuffer::new(&self.display, fbtex).unwrap()
+        match self.display {
+            ScreenType::Window(ref d) => {
+                glium::framebuffer::SimpleFrameBuffer::new(d, fbtex).unwrap()
+            }
+            ScreenType::Headless(ref d) => {
+                glium::framebuffer::SimpleFrameBuffer::new(d, fbtex).unwrap()
+            } 
+        }
     }
 
     #[inline]
