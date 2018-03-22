@@ -114,7 +114,7 @@ impl<'a> Rect<'a> {
                                    // },
                 ],
                 color: [0.0, 0.0, 0.0, 0.0],
-                texcoord: [0f32, 0.],
+                texcoord: [0f32, 1.],
             };
             shape.push(vertex);
             let vertex = ShapeVertex {
@@ -127,7 +127,7 @@ impl<'a> Rect<'a> {
                                    // },
                 ],
                 color: [0.0, 0.0, 0.0, 0.0],
-                texcoord: [1f32, 0.],
+                texcoord: [1f32, 1.],
             };
             shape.push(vertex);
             let vertex = ShapeVertex {
@@ -140,7 +140,7 @@ impl<'a> Rect<'a> {
                                    // },
                 ],
                 color: [0.0, 0.0, 0.0, 0.0],
-                texcoord: [1f32, 1.],
+                texcoord: [1f32, 0.],
             };
             shape.push(vertex);
             let vertex = ShapeVertex {
@@ -153,7 +153,7 @@ impl<'a> Rect<'a> {
                                    // },
                 ],
                 color: [0.0, 0.0, 0.0, 0.0],
-                texcoord: [0f32, 1.],
+                texcoord: [0f32, 0.],
             };
             shape.push(vertex);
         }

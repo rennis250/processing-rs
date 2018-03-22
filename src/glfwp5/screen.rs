@@ -231,19 +231,19 @@ impl<'a> Screen<'a> {
         let shader_bank = init_shaders(&display, &GlslVersion);
 
         let vertex1 = DFBFDVertex {
-            position: [-1.0, 1.0],
+            position: [-1.0, -1.0],
             texcoord: [0.0, 0.0],
         };
         let vertex2 = DFBFDVertex {
-            position: [1.0, 1.0],
+            position: [1.0, -1.0],
             texcoord: [1.0, 0.0],
         };
         let vertex3 = DFBFDVertex {
-            position: [1.0, -1.0],
+            position: [1.0, 1.0],
             texcoord: [1.0, 1.0],
         };
         let vertex4 = DFBFDVertex {
-            position: [-1.0, -1.0],
+            position: [-1.0, 1.0],
             texcoord: [0.0, 1.0],
         };
         let shape = vec![vertex1, vertex2, vertex3, vertex4];
