@@ -81,6 +81,7 @@ pub struct DFBFDVertex {
 
 implement_vertex!(DFBFDVertex, position, texcoord);
 
+#[cfg(not(feature = "glfw"))]
 enum ScreenType {
     Window(glium::Display),
     Headless(glium::HeadlessRenderer),
@@ -146,12 +147,17 @@ use std::sync::mpsc::Receiver;
 #[cfg(feature = "glfw")]
 use glfwp5::backend::Display;
 #[cfg(feature = "glfw")]
+enum ScreenType {
+    Window(Display),
+    Headless(Display),
+}
+#[cfg(feature = "glfw")]
 pub struct Screen<'a> {
     FBTexture: glium::texture::Texture2d,
     fb_shape_buffer: glium::VertexBuffer<DFBFDVertex>,
     fb_index_buffer: glium::index::IndexBuffer<u16>,
     FBO: owning_ref::OwningHandle<Box<FBtexs>, Box<glium::framebuffer::SimpleFrameBuffer<'a>>>,
-    display: Display,
+    display: ScreenType,
     glfw: glfw::Glfw,
     events_loop: Receiver<(f64, glfw::WindowEvent)>,
     draw_params: glium::draw_parameters::DrawParameters<'a>,

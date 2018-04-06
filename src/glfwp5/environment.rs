@@ -3,24 +3,28 @@
 use glium;
 use glfw;
 
-use Screen;
+use {Screen, ScreenType};
 
 impl<'a> Screen<'a> {
     #[inline]
     pub fn reset_cursor(&mut self) {
         self.currCursor = glfw::StandardCursor::Arrow;
-        self.display.gl_window_mut().set_cursor(
-            Some(glfw::Cursor::standard(
-                self.currCursor,
-            )),
-        );
+        match self.display {
+            ScreenType::Window(ref d) => {
+                (*d).gl_window_mut().set_cursor(Some(glfw::Cursor::standard(self.currCursor)));
+            }
+            _ => (),
+        };
     }
 
     #[inline]
     pub fn cursor(&mut self, cursorType: &str) {
-        self.display.gl_window_mut().set_cursor_mode(
-            glfw::CursorMode::Normal,
-        );
+        match self.display {
+            ScreenType::Window(ref d) => {
+                (*d).gl_window_mut().set_cursor_mode(glfw::CursorMode::Normal);
+            }
+            _ => ()
+        }
         if cursorType == "HAND" {
             self.currCursor = glfw::StandardCursor::Hand;
         } else if cursorType == "ARROW" {
@@ -34,11 +38,12 @@ impl<'a> Screen<'a> {
         } else if cursorType == "WAIT" {
             // self.currCursor = glfw::StandardCursor::Wait;
         }
-        self.display.gl_window_mut().set_cursor(
-            Some(glfw::Cursor::standard(
-                self.currCursor,
-            )),
-        );
+        match self.display {
+            ScreenType::Window(ref d) => {
+                (*d).gl_window_mut().set_cursor(Some(glfw::Cursor::standard(self.currCursor)));
+            }
+            _ => ()
+        };
     }
 
     #[inline]
@@ -79,9 +84,12 @@ impl<'a> Screen<'a> {
 
     #[inline]
     pub fn noCursor(&mut self) {
-        self.display.gl_window_mut().set_cursor_mode(
-            glfw::CursorMode::Hidden,
-        );
+        match self.display {
+            ScreenType::Window(ref d) => {
+                (*d).gl_window_mut().set_cursor_mode(glfw::CursorMode::Hidden)
+            }
+            _ => ()
+        };
     }
 
     #[inline]

@@ -6,6 +6,10 @@ use {Screen, ScreenType};
 impl<'a> Screen<'a> {
     #[inline]
     pub fn reset_cursor(&mut self) {
+        match self.display {
+            ScreenType::Window(ref d) => { (*d).gl_window().set_cursor_state(glutin::CursorState::Normal); },
+            _ => (),
+        };
         self.currCursor = glium::glutin::MouseCursor::Default;
         match self.display {
             ScreenType::Window(ref d) => {
@@ -19,7 +23,10 @@ impl<'a> Screen<'a> {
 
     #[inline]
     pub fn cursor(&mut self, cursorType: &str) {
-        // GLFW.SetInputMode(window, GLFW.CURSOR, GLFW.CURSOR_NORMAL);
+        match self.display {
+            ScreenType::Window(ref d) => { (*d).gl_window().set_cursor_state(glutin::CursorState::Normal); },
+            _ => (),
+        };
         if cursorType == "HAND" {
             self.currCursor = glium::glutin::MouseCursor::Hand;
         } else if cursorType == "ARROW" {
@@ -79,7 +86,10 @@ impl<'a> Screen<'a> {
 
     #[inline]
     pub fn noCursor(&mut self) {
-        unimplemented!{};
+        match self.display {
+            ScreenType::Window(ref d) => { (*d).gl_window().set_cursor_state(glutin::CursorState::Hide); },
+            _ => (),
+        };
         // GLFW.SetInputMode(self, GLFW.CURSOR, GLFW.CURSOR_HIDDEN);
     }
 

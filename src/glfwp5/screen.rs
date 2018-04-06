@@ -24,6 +24,10 @@ use glfwp5::backend::{GLFWBackend, Display};
 use shapes::ShapeVertex;
 use shaders::ShaderInfo;
 use {Screen, GLmatStruct, FBtexs, DFBFDVertex};
+use ScreenType;
+
+#[cfg(target_os = "macos")]
+use mac_priority;
 
 impl<'a> Screen<'a> {
     pub fn init() -> glfw::Glfw {
@@ -36,10 +40,11 @@ impl<'a> Screen<'a> {
         mut glfw: glfw::Glfw,
         fullscreen: bool,
         preserveAspectRatio: bool,
+        headless: bool
     ) -> Screen<'a> {
         #[cfg(target_os = "macos")] mac_priority();
 
-        glfw.window_hint(glfw::WindowHint::Visible(true));
+        glfw.window_hint(glfw::WindowHint::Visible(!headless));
         glfw.window_hint(glfw::WindowHint::Resizable(false));
         glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
         glfw.window_hint(glfw::WindowHint::OpenGlForwardCompat(true));
@@ -310,7 +315,7 @@ impl<'a> Screen<'a> {
             FBTexture: FBTexture,
             fb_shape_buffer: fb_shape_buffer,
             fb_index_buffer: fb_index_buffer,
-            display: display,
+            display: if headless { ScreenType::Headless(display) } else { ScreenType::Window(display) },
             glfw: glfw,
             events_loop: events_loop,
             draw_params: draw_params,
@@ -356,12 +361,16 @@ impl<'a> Screen<'a> {
             mousepressed: None,
             mousereleased: None,
             mousepos: (-100., -100.),
+            headless: headless,
         }
     }
 
     #[inline]
     pub fn reveal(&mut self) {
-        let mut target = self.display.draw();
+        let mut target = match self.display {
+            ScreenType::Window(ref d) => d.draw(),
+            ScreenType::Headless(ref d) => d.draw(),
+        };
         {
             let uniforms = uniform! { texFramebuffer: &self.FBTexture };
             let p = &self.shader_bank[3];
@@ -501,7 +510,10 @@ impl<'a> Screen<'a> {
     }
 
     pub fn end_drawing(self) {
-        self.display.gl_window_mut().set_should_close(true);
+        match self.display {
+            ScreenType::Window(ref d) => (*d).gl_window_mut().set_should_close(true),
+            ScreenType::Headless(ref d) => (*d).gl_window_mut().set_should_close(true),
+        };
         // unsafe {
         // glfw::ffi::glfwTerminate();
         // }

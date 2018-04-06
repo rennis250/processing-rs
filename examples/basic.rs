@@ -21,8 +21,8 @@ use p5::shapes::cube::Cube;
 fn main() {
     let normal = Normal::new(0.0, 1.0);
     let mut rng = rand::thread_rng();
-    //let glf = p5::Screen::init();
-    //let mut screen = p5::Screen::new(300, 300, glf, true, false);
+    // let glf = p5::Screen::init();
+    // let mut screen = p5::Screen::new(300, 300, glf, true, false, false);
     let mut screen = p5::Screen::new(300, 300, true, false, true);
 
     let mut ftbf = [0; 600];
@@ -34,6 +34,7 @@ fn main() {
     let (tex, _, _) = screen.texture(&img);
 
     screen.SpaceWait();
+    screen.noCursor();
 
     screen.stroke(&[0.], &[0.], &[0.], &[1.]);
     screen.fill(&[0.7], &[0.7], &[0.7], &[1.0]);
@@ -108,38 +109,38 @@ fn main() {
 
     while x < 600 {
         let st = time::precise_time_ns();
-        screen.background(0.94, 0.92, 0.9, 1.0);
-        screen.stroke_on();
-        screen.draw(&e1);
-        screen.draw(&e2);
-        screen.draw(&tr1);
-        screen.draw(&tr2);
-        screen.draw(&p);
-        // screen.text("processing-rs", &[0.25], -&[0.85]);
-        screen.draw(&q);
-        screen.draw(&l1);
-        screen.fill_off();
-        screen.draw(&r1);
-        screen.draw(&l2);
-        screen.draw(&a);
-        screen.fill_on();
-        screen.draw(&e3);
-        screen.pushMatrix();
-        screen.rotateY(f32::consts::PI / 10. * t);
-        screen.rotateX(f32::consts::PI / 10. * t);
-        screen.translate(0.2, -0.5, 0.);
-        screen.draw(&c);
-        screen.popMatrix();
-        screen.stroke_off();
-        screen.draw(&r2);
-        // if screen.key_press(p5::Key::Space) {
-        //     screen.save("screenshot.png");
-        //     println!("key pressed and screenshot saved.");
+        // screen.background(0.94, 0.92, 0.9, 1.0);
+        // screen.stroke_on();
+        // screen.draw(&e1);
+        // screen.draw(&e2);
+        // screen.draw(&tr1);
+        // screen.draw(&tr2);
+        // screen.draw(&p);
+        // // screen.text("processing-rs", &[0.25], -&[0.85]);
+        // screen.draw(&q);
+        // screen.draw(&l1);
+        // screen.fill_off();
+        // screen.draw(&r1);
+        // screen.draw(&l2);
+        // screen.draw(&a);
+        // screen.fill_on();
+        // screen.draw(&e3);
+        // screen.pushMatrix();
+        // screen.rotateY(f32::consts::PI / 10. * t);
+        // screen.rotateX(f32::consts::PI / 10. * t);
+        // screen.translate(0.2, -0.5, 0.);
+        // screen.draw(&c);
+        // screen.popMatrix();
+        // screen.stroke_off();
+        // screen.draw(&r2);
+        // // if screen.key_press(p5::Key::Space) {
+        // //     screen.save("screenshot.png");
+        // //     println!("key pressed and screenshot saved.");
+        // // }
+        // if screen.MousePress(p5::MouseButton::Left) {
+        //     println!("bye!");
+        //     break;
         // }
-        if screen.MousePress(p5::MouseButton::Left) {
-            println!("bye!");
-            break;
-        }
         ftbf[x - 1] = time::precise_time_ns() - st;
         screen.reveal();
         ft[x - 1] = time::precise_time_ns() - st;
