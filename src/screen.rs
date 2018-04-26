@@ -626,7 +626,7 @@ impl<'a> Screen<'a> {
                     } if glutin::ElementState::Released == s => {
                         mr = Some(b);
                     }
-                    glutin::WindowEvent::MouseMoved { position, .. } => {
+                    glutin::WindowEvent::CursorMoved { position, .. } => {
                         mpos = position;
                     }
                     _ => (),
@@ -699,7 +699,7 @@ impl<'a> Screen<'a> {
                         } if glutin::ElementState::Released == s => {
                             mr = Some(b);
                         }
-                        glutin::WindowEvent::MouseMoved { position, .. } => {
+                        glutin::WindowEvent::CursorMoved { position, .. } => {
                             mpos = position;
                         }
                         _ => (),

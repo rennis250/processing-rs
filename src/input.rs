@@ -78,7 +78,7 @@ impl<'a> Screen<'a> {
     pub fn MouseY(&mut self) -> f64 {
         self.mousepos.1
     }
-    
+
     pub fn poll_events(&mut self) {
         let mut kp = None;
         let mut mp = None;
@@ -112,7 +112,7 @@ impl<'a> Screen<'a> {
                         } if glutin::ElementState::Released == s => {
                             mr = Some(b);
                         }
-                        glutin::WindowEvent::MouseMoved { position, .. } => {
+                        glutin::WindowEvent::CursorMoved { position, .. } => {
                             mpos = position;
                         }
                         _ => (),
