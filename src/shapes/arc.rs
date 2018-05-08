@@ -6,6 +6,9 @@ use {Screen, ScreenType};
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
+/// An arc is essentially just part of an ellipse, so it traces out part of the contour
+/// by starting at a certain position (specified in radians) and ending at a certain
+/// position (also specified in radians).
 pub struct Arc {
     fill_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
     stroke_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
@@ -37,6 +40,10 @@ impl Shape for Arc {
 }
 
 impl Arc {
+	/// Create a new Arc object to be drawn later. It has a center position
+	/// (xci, yci, zci), a width (wi), a height (hi), a starting point for
+	/// drawing (starti, in radians), and a stopping point for drawing
+	/// (stopi, in radians).
     #[inline]
     pub fn new(
         screen: &Screen,

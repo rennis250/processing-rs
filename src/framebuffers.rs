@@ -7,6 +7,10 @@ use shapes::mould::Mould;
 use {Screen, ScreenType};
 
 impl<'a> Screen<'a> {
+	/// Create a new framebuffer from a texture. This is necessary if you want
+	/// to draw to a texture, which is useful in combination with shaders that
+	/// perform some post-processing on the texture. In the case that you will also
+	/// use a shader for post-processing, you will also need to use a Mould.
     #[inline]
     pub fn framebuffer(
         &self,
@@ -22,6 +26,7 @@ impl<'a> Screen<'a> {
         }
     }
 
+	/// Erase the framebuffer and set it to the given color.
     #[inline]
     pub fn clear_framebuffer(
         &self,
@@ -34,6 +39,7 @@ impl<'a> Screen<'a> {
         framebuffer.clear_color_srgb(r, g, b, a);
     }
 
+	/// Draw the given shape onto the given framebuffer.
     #[inline]
     pub fn draw_onto_framebuffer<S: Shape>(
         &self,
@@ -115,6 +121,7 @@ impl<'a> Screen<'a> {
         // }
     }
 
+	/// Draw a Mould (i.e., a shape plus a custom shader) onto the given framebuffer.
     #[inline]
     pub fn draw_mould_onto_framebuffer<S: Shape, U: Uniforms>(
         &self,

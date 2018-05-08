@@ -7,6 +7,8 @@ use {Screen, ScreenType};
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
+/// For the purposes of `processing-rs`, a point is basically just a pixel, specifed
+/// by a single position.
 pub struct Point {
     fill_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
     stroke_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
@@ -37,6 +39,8 @@ impl Shape for Point {
 }
 
 impl Point {
+	/// Create a new Point to be drawn later. It is specified by its position
+	/// (xi, yi, zi).
     #[inline]
     pub fn new(screen: &mut Screen, xi: &[f64], yi: &[f64], zi: &[f64]) -> Self {
         let mut x: Vec<f64> = xi.iter().map(|&v| v).collect::<Vec<f64>>();

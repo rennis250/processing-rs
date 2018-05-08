@@ -9,6 +9,11 @@ use {Screen, ScreenType};
 const GL_TEXTURE_MAX_ANISOTROPY_EXT: u32 = 0x84FE;
 
 impl<'a> Screen<'a> {
+	/// Take an image (in particular anything that implements image::ImageBuffer,
+	/// such as the image::ImageRgba returned by processing.load_image()) and upload
+	/// it to the GPU as a texture for later use. In return, you will get a reference
+	/// to the texture, its width in normalized screen coordinates (i.e., [0,1]),
+	/// and its height in normalized screen coordinates.
     pub fn texture<P, S, C>(
         &mut self,
         img: &image_ext::ImageBuffer<P, C>,
@@ -54,6 +59,10 @@ impl<'a> Screen<'a> {
         )
     }
 
+	/// Create an empty texture on the GPU. The output is the same as screen.texture(),
+	/// so see that for more info. This function is useful in circumstances where you
+	/// want to draw something onto a texture and use that for a later purpose, rather
+	/// than load an external image. See the framebuffers module for more info.
     pub fn empty_texture(&self, w: u32, h: u32) -> (glium::texture::Texture2d, f64, f64) {
         let texture = match self.display {
             ScreenType::Window(ref d) => {
@@ -83,6 +92,10 @@ impl<'a> Screen<'a> {
         )
     }
 
+	/// Rather than create a texture from an external image or creating an empty texture
+	/// and drawing to it, you can create a texture from arbitrary data. It expects a
+	/// Vec of Vec (mimicing the layout of an image) that contains anything that
+	/// implements glium::texture::PixelValue.
     pub fn texture_from_data<P: glium::texture::PixelValue>(
         &self,
         data: Vec<Vec<P>>,
@@ -114,6 +127,9 @@ impl<'a> Screen<'a> {
         )
     }
 
+	/// When you sample outside the boundaries of a texture, should it wrap around and
+	/// repeat ("REPEAT", the default) or should it clamp ("CLAMP") at the edge. See
+	/// the official Processing reference for more info and examples.
     pub fn textureWrap(&mut self, wrap: &str) {
         if wrap == "CLAMP" {
             self.wrap = glium::uniforms::SamplerWrapFunction::Clamp;

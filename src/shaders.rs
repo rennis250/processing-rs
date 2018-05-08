@@ -9,12 +9,23 @@ use glium::uniforms::Uniforms;
 
 use {Screen, ScreenType};
 
+/// This holds information related to a custom shader that has been loaded
+/// by you. It basically just allows `processing-rs` to find the associated program
+/// in a Vector of programs that is managed by the Screen struct and also holds the
+/// current uniform values associated with that program. To change the uniform values
+/// for the program, you need to call shader_info.set().
 #[derive(Clone, Debug)]
 pub struct ShaderInfo<U: Uniforms> {
     ShaderIdx: usize,
     uniforms: Option<U>,
 }
 
+/// This macro rolls your custom uniforms for your custom shader into the uniform
+/// format expected by glium. It makes things more convienent, because it will add the
+/// current MVP transformation matrix that is shared across all shaders for consistent
+/// rendering to the screen. If your shader will be rendering 2-dimensional or
+/// 3-dimensional shapes to the screen, you will probably want to make use of this
+/// matrix, which will be available as `uniform mat4 MVP` in your custom shader.
 #[macro_export]
 macro_rules! create_uniforms {
     ($screen:ident) => {
@@ -40,6 +51,13 @@ macro_rules! create_uniforms {
 }
 
 impl<U: Uniforms> ShaderInfo<U> {
+	/// Create a new ShaderInfo struct that contains your uniforms and the shader
+	/// index that was returned by OpenGL. You should basically not need to use this
+	/// as a normal user, since screen.load_frag_shader() and screen.load_shaders()
+	/// use it internally and handle the details for you. The uniforms will need to
+	/// have been created by the macro `create_uniforms{}` provided by this crate.
+	/// Please see its documentation and use it whenever you need to pass uniforms
+	/// to shaders in `processing-rs`.
     pub fn new(idx: usize, uniforms: Option<U>) -> Self {
         ShaderInfo {
             ShaderIdx: idx,
@@ -47,19 +65,30 @@ impl<U: Uniforms> ShaderInfo<U> {
         }
     }
 
+	/// Change the currently assigned uniform values for your custom shader. You will
+	/// need to redefine all of the uniforms via the `create_uniforms{}` macro, even if
+	/// only one uniform changes value. This really shouldn't have any performance
+	/// impact on your program, so don't worry. This constraint is imposed by raw
+	/// glium, so the situation wouldn't really change if you used that instead.
     pub fn set(&mut self, uniforms: U) {
         self.uniforms = Some(uniforms);
     }
 
+	/// Return the shader index that was assigned by OpenGL to your custom shader.
     pub fn get_idx(&self) -> usize {
         self.ShaderIdx
     }
 
+	/// Return a reference to the uniforms that you assigned to your custom shader.
     pub fn get_uniforms(&self) -> &U {
         self.uniforms.as_ref().unwrap()
     }
 }
 
+/// Processing has three ways to feed data through a shader: as points, as lines,
+/// and as triangles. The distinction is not as necessary here and may go away in time.
+/// Regardless, this hasn't been actually implemented yet, but if you want more info,
+/// check the official Processing reference for now.
 enum DrawType {
     POINT,
     LINE,
@@ -104,6 +133,19 @@ impl<'a> Screen<'a> {
     //     }
     // }
 
+	/// Load your custom fragment shader and the initial values of the uniforms that
+	/// go with it. You will get a ShaderInfo struct in return, through which you
+	/// can update the uniform values and which can be used to tell `processing-rs` to
+	/// use your custom shader, instead of the standard ones it provides. The ShaderInfo
+	/// struct that you receive should be the input to screen.shader(), which allows
+	/// you to use the custom shader.
+	///
+	/// This function provides an additional convienence, in that if your shader
+	/// contains a line like `#include <auxiliary.frag>` it will process that and
+	/// load the named file into that exact location of your fragment shader. This
+	/// allows you to keep things a bit more modular and managable. Please note though,
+	/// it will do this no matter where you put the line, so remain aware. You probably
+	/// only want to use this convienence at outermost scope, but the choice is yours.
     pub fn load_frag_shader<U: Uniforms>(
         &mut self,
         fragFilename: &str,
@@ -242,6 +284,9 @@ impl<'a> Screen<'a> {
     //     shader_info
     // }
 
+	/// Tell `processing-rs` to use your custom shader instead of one of the standards
+	/// it provides. This only accepts ShaderInfo structs, which are output by
+	/// screen.load_frag_shader() and screen.load_shaders().
     #[inline]
     pub fn shader<U: Uniforms>(&mut self, whichShader: &ShaderInfo<U>) {
         //shaderType enum - how to handle?...
@@ -250,6 +295,8 @@ impl<'a> Screen<'a> {
         self.CurrShader = whichShader.ShaderIdx;
     }
 
+	/// Tell `processing-rs` to stop using any custom shaders and to return to
+	/// the default shaders.
     #[inline]
     pub fn reset_shader(&mut self) {
         self.CurrShader = 0;

@@ -6,6 +6,9 @@ use {Screen, ScreenType};
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
+/// A quadrilateral is a shape with four sides that are straight lines, so it is
+/// completely specified by the four points (vertices) at the corners where the
+/// lines meet.
 pub struct Quad<'a> {
     fill_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
     stroke_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
@@ -40,6 +43,9 @@ impl<'a> Shape for Quad<'a> {
 }
 
 impl<'a> Quad<'a> {
+	/// Create a new Quad to be drawn later. It is specified by four corners at
+	/// positions 1 (x1i, y1i, z1i), 2 (x2i, y2i, z2i), 3 (x3i, y3i, z3i), and
+	/// 4 (x4i, y4i, z4i).
     pub fn new(
         screen: &Screen,
         x1i: &[f64],

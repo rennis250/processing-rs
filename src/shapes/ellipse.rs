@@ -8,6 +8,8 @@ use {Screen, ScreenType};
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
+/// An ellipse is essentially a streched circle, with the circle itself being a special
+/// kind of ellipse. An ellipse has a width and a height.
 pub struct Ellipse {
     fill_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
     stroke_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
@@ -38,6 +40,8 @@ impl Shape for Ellipse {
 }
 
 impl Ellipse {
+	/// Create a new Ellipse to be drawn later. It has a center position
+	/// (xci, yci, zci), a width (wi), and a height (hi).
     #[inline]
     pub fn new(
         screen: &Screen,

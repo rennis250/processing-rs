@@ -2,9 +2,9 @@
 
 use glfw;
 
-// these constants come from and are inspired by the pyprocessing project
-// (https://code.google.com/p/pyprocessing/source/browse/trunk/pyprocessing/constants.py)
-// with some slight adjustments
+///! These constants come from and are inspired by the pyprocessing project
+///! (https://code.google.com/p/pyprocessing/source/browse/trunk/pyprocessing/constants.py)
+///! with some slight adjustments
 
 // shapes
 // pub const POINTS = GL_POINTS;
@@ -16,7 +16,8 @@ use glfw;
 // pub const QUAD_STRIP = GL_QUAD_STRIP;
 pub const CLOSE: isize = 1;
 
-// perlin noise table
+/// Perlin noise table. Use it as a precomputed source of noise that emulates the
+/// randomness found in natural processes.
 pub const perlin: [isize; 512] = [
     151,
     160,
@@ -532,6 +533,7 @@ pub const perlin: [isize; 512] = [
     180,
 ];
 
+/// The different mouse events that can be the result of user input.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum MouseButton {
     Left,
@@ -559,6 +561,7 @@ impl From<MouseButton> for glfw::MouseButton {
     }
 }
 
+/// The different key events that can be the result of user input.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Key {
     Space,

@@ -4,6 +4,10 @@ use glium::uniforms::Uniforms;
 use shaders::ShaderInfo;
 use shapes::{Shape, IndexType};
 
+/// A Mould is a Shape that has been paired with a custom shader. This is useful when
+/// you want to modify the way a few shapes are drawn, without completely altering 
+/// the standard `processing-rs` rendering state. The concept was borrowed from
+/// libCinder.
 pub struct Mould<U: Uniforms, S: Shape> {
     shape: S,
     shader: ShaderInfo<U>,

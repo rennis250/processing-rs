@@ -7,6 +7,8 @@ use {Screen, ScreenType};
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
+/// A line joins two points and is straight. It is completely specified by its two
+/// endpoints.
 pub struct Line {
     fill_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
     stroke_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
@@ -37,6 +39,8 @@ impl Shape for Line {
 }
 
 impl Line {
+	/// Create a new Line to be drawn later. It is specified by two endpoints, located
+	/// at positions 1 (x1i, y1i, z1i) and 2 (x2i, y2i, z2i).
     #[inline]
     pub fn new(
         screen: &Screen,

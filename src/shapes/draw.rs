@@ -8,6 +8,9 @@ use shapes::mould::Mould;
 use Screen;
 
 impl<'a> Screen<'a> {
+	/// Take a given shape and draw it onto the screen. Since the shape's properties
+	/// were precomputed and its buffers were already uploaded to the GPU, drawing
+	/// many shapes should be faster than in a standard Processing environment.
     #[inline]
     pub fn draw<S: Shape>(&mut self, shape: &S) {
         let framebuffer = &mut self.FBO;
@@ -73,6 +76,11 @@ impl<'a> Screen<'a> {
         // }
     }
 
+	/// The same as screen.draw(), except now a Mould will be drawn to the screen.
+	/// A Mould is just a shape that has been paired with a given shader which
+	/// alters how it is typically drawn to the screen. This allows one to have
+	/// a shader affect only one object instead of the whole drawing process.
+	/// The concept is borrowed from libCinder.
     #[inline]
     pub fn draw_mould<S: Shape, U: Uniforms>(&mut self, mould: &Mould<U, S>) {
         let shader = mould.get_shader();

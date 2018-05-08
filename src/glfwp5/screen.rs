@@ -30,10 +30,30 @@ use ScreenType;
 use mac_priority;
 
 impl<'a> Screen<'a> {
+	/// If you are using glfw as a backend, then you need to call this before calling
+	/// Screen::new(). It is required by the glfw library. The result will be a
+	/// glfw::Glfw struct that should be passed to Screen::new() as input, which will
+	/// handle the rest of the initialization.
     pub fn init() -> glfw::Glfw {
         glfw::init(glfw::FAIL_ON_ERRORS).unwrap()
     }
 
+	/// Create a new Screen struct with a given width and height. Also, specify if
+	/// the Screen should be fullscreen, if it should preserve aspect ratio on wide
+	/// monitors, and if it should be synchronize to the refresh rate of the monitor
+	/// (this should always be true, except in rare circumstances when you need really
+	/// high draw rates, such as when doing intense raymarching in a fragment shader).
+	///
+	/// In the case of glfw as a backend, you will also need to provide the glfw::Glfw
+	/// struct that is returned by Screen::init().
+	///
+	/// It is necessary to call this function before everything else. It's what gets
+	/// the whole show going. Once you have a Screen, you can then create shapes,
+	/// load textures, draw, check for user input, etc.
+	///
+	/// Screen setup tries to choose a number of glutin and glium defaults that will
+	/// satisfy most users, especially those that want speed but still have a
+	/// visually pleasing display of shapes with good color fidelity, if possible.
     pub fn new(
         width: u32,
         height: u32,
@@ -365,6 +385,13 @@ impl<'a> Screen<'a> {
         }
     }
 
+	
+	/// Once you have finished drawing a number of shapes to the screen, you will need
+	/// to call screen.reveal() for the result to be viewable on the monitor. This is
+	/// because `processing-rs` uses double-buffering, whereby all of the drawing 
+	/// happens on a separate, hidden buffer and once that is done, it is transferred
+	/// to a viewable, monitor buffer. This is standard practice in graphics programming,
+	/// since it makes drawing faster and reduces screen tearing.
     #[inline]
     pub fn reveal(&mut self) {
         let mut target = match self.display {
@@ -509,6 +536,9 @@ impl<'a> Screen<'a> {
         self.frameCount += 1;
     }
 
+	/// This will safely close a window and drop the Screen struct associated with it.
+	/// Currently unimplemented, so for now, to close a window, you have to quit the
+	/// running program.
     pub fn end_drawing(self) {
         match self.display {
             ScreenType::Window(ref d) => (*d).gl_window_mut().set_should_close(true),

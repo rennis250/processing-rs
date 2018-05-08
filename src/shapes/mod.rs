@@ -25,6 +25,13 @@ pub struct ShapeVertex {
 
 implement_vertex!(ShapeVertex, position, color, texcoord);
 
+/// A shape is a generic concept, as expressed by the Shape trait here. From the point
+/// of view of `processing-rs`, a shape is anything that has fill and stroke buffer
+/// arrays reserved for it on the GPU, has indices that determine whether or not it
+/// should be drawn as specified by an element buffer, and may or may not have a
+/// a texture attached to it. This concept could be modified and expanded with time, but
+/// the details need not concern the average user. All of the standard Processing shapes
+/// are provided in this module and they all already implement the Shape trait.
 pub trait Shape {
     fn fill_buffer(&self) -> Box<&glium::vertex::VertexBuffer<ShapeVertex>>;
     fn stroke_buffer(&self) -> Box<&glium::vertex::VertexBuffer<ShapeVertex>>;

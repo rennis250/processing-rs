@@ -4,6 +4,8 @@
 #include <mach/mach_init.h>
 #include <mach/thread_act.h>
 
+// Obtained from the Stage psychophysics suite for Matlab.
+
 void setMaxPriority()
 {
     int mib[2];

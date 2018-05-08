@@ -7,6 +7,8 @@ use {Screen, ScreenType};
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
+/// A rectangle is a quadrilateral whose sides meet at perpendicular angles. It is
+/// specified by its width and height.
 pub struct Rect<'a> {
     fill_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
     stroke_buffer: glium::vertex::VertexBuffer<ShapeVertex>,
@@ -42,6 +44,9 @@ impl<'a> Shape for Rect<'a> {
 
 
 impl<'a> Rect<'a> {
+	/// Create a new Rect to be drawn later. It is specified by the location of its
+	/// top-left corner (xtoplefti, ytoplefti, ztoplefti) and its width (widthi) and
+	/// height (heighti).
     #[inline]
     pub fn new(
         screen: &Screen,

@@ -19,6 +19,19 @@ use ScreenType;
 use mac_priority;
 
 impl<'a> Screen<'a> {
+	/// Create a new Screen struct with a given width and height. Also, specify if
+	/// the Screen should be fullscreen, if it should preserve aspect ratio on wide
+	/// monitors, and if it should be synchronize to the refresh rate of the monitor
+	/// (this should always be true, except in rare circumstances when you need really
+	/// high draw rates, such as when doing intense raymarching in a fragment shader).
+	///
+	/// It is necessary to call this function before everything else. It's what gets
+	/// the whole show going. Once you have a Screen, you can then create shapes,
+	/// load textures, draw, check for user input, etc.
+	///
+	/// Screen setup tries to choose a number of glutin and glium defaults that will
+	/// satisfy most users, especially those that want speed but still have a
+	/// visually pleasing display of shapes with good color fidelity, if possible.
     pub fn new(
         width: u32,
         height: u32,
@@ -313,6 +326,21 @@ impl<'a> Screen<'a> {
         }
     }
 
+	/// This creates a "headless" rendering screen. It's basically the same as a screen
+	/// except that you won't see a window. This is useful when you need to quickly
+	/// render some kind of image, but you don't want to user to see all of the 
+	/// drawing that leads up to the final image. In other words, you could draw in the
+	/// headless window, save the result, and load it as a texture to be displayed in 
+	/// a main display window. One circumstance where I used this was to have a GLSL
+	/// fragment shader pathtrace a scene and then have the result displayed in another
+	/// window. For various reasons, I couldn't have users see the scene being 
+	/// progressively created, so the "headless" rendering screen effectively hid it.
+	///
+	/// This takes width and height as parameters, as well as whether or not aspect
+	/// ratio should be preserved. Fullscreen makes no sense for a "headless"
+	/// rendering window, and neither does frame synchronization, since it never
+	/// displays anything on the monitor. Otherwise, you should also see the
+	/// documentation for the main Screen struct.
     pub fn new_headless(
         width: u32,
         height: u32,
@@ -574,6 +602,12 @@ impl<'a> Screen<'a> {
         }
     }
 
+	/// Once you have finished drawing a number of shapes to the screen, you will need
+	/// to call screen.reveal() for the result to be viewable on the monitor. This is
+	/// because `processing-rs` uses double-buffering, whereby all of the drawing 
+	/// happens on a separate, hidden buffer and once that is done, it is transferred
+	/// to a viewable, monitor buffer. This is standard practice in graphics programming,
+	/// since it makes drawing faster and reduces screen tearing.
     #[inline]
     pub fn reveal(&mut self) {
         let mut target = match self.display {
@@ -642,7 +676,10 @@ impl<'a> Screen<'a> {
 
         self.frameCount += 1;
     }
-
+    
+    /// This function works exactly the same as screen.reveal(), except that it also
+    /// outputs a Vector of raw glutin events, if you need that for any reason. I needed
+    /// it once, so I leave it here.
     #[inline]
     pub fn reveal_with_events(&mut self) -> Vec<glium::glutin::Event> {
         let mut target = match self.display {
@@ -723,8 +760,11 @@ impl<'a> Screen<'a> {
     // pub fn clone_display(&self) -> ScreenType {
     //     self.display.clone()
     // }
-
-    pub fn end_drawing(self) {}
+	
+	/// This will safely close a window and drop the Screen struct associated with it.
+	/// Currently unimplemented, so for now, to close a window, you have to quit the
+	/// running program.
+    pub fn end_drawing(self) { unimplemented!() }
 }
 
 //

@@ -6,6 +6,8 @@ use glfw;
 use {Screen, ScreenType};
 
 impl<'a> Screen<'a> {
+	/// Change the cursor back to the default that is used when a new Screen is made.
+	/// This is operating system dependent, but is usually an arrow.
     #[inline]
     pub fn reset_cursor(&mut self) {
         self.currCursor = glfw::StandardCursor::Arrow;
@@ -17,6 +19,9 @@ impl<'a> Screen<'a> {
         };
     }
 
+	/// Change the cursor. Possible types are "HAND", "ARROW", "CROSS", "MOVE", "TEXT",
+	/// and "WAIT", all following the convention of Processing. These will probably be
+	/// changed to enums in the future.
     #[inline]
     pub fn cursor(&mut self, cursorType: &str) {
         match self.display {
@@ -46,6 +51,7 @@ impl<'a> Screen<'a> {
         };
     }
 
+	/// Test if this screen is the currently focused screen.
     #[inline]
     pub fn focused(&mut self) -> bool {
         let mut focused = false;
@@ -62,26 +68,31 @@ impl<'a> Screen<'a> {
         focused
     }
 
+	/// How many frames have already been revealed.
     #[inline]
     pub fn frameCount(&self) -> isize {
         self.frameCount
     }
 
+	/// What is the current framerate of the screen.
     #[inline]
     pub fn get_frameRate(&self) -> isize {
         self.frameRate
     }
 
+	/// Change the framerate of the screen.
     #[inline]
     pub fn set_frameRate(&mut self, fRate: isize) {
         self.frameRate = fRate;
     }
 
+	/// What is the height of the screen.
     #[inline]
     pub fn height(&self) -> u32 {
         self.height
     }
 
+	/// Disable the cursor so that it cannot be seen.
     #[inline]
     pub fn noCursor(&mut self) {
         match self.display {
@@ -92,6 +103,8 @@ impl<'a> Screen<'a> {
         };
     }
 
+	/// Draw shapes without antialiasing, so that individual pixels can be more readily
+	/// observed.
     #[inline]
     pub fn noSmooth(&mut self) {
         self.draw_params = glium::draw_parameters::DrawParameters {
@@ -100,6 +113,7 @@ impl<'a> Screen<'a> {
         };
     }
 
+	/// Draw shapes with antialiasing for a more pleasing visual appearence.
     #[inline]
     pub fn smooth(&mut self) {
         self.draw_params = glium::draw_parameters::DrawParameters {
@@ -108,6 +122,7 @@ impl<'a> Screen<'a> {
         };
     }
 
+	/// What is the width of the screen.
     #[inline]
     pub fn width(&self) -> u32 {
         self.width

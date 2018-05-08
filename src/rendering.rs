@@ -3,6 +3,11 @@ use glium;
 use Screen;
 
 impl<'a> Screen<'a> {
+	/// Change the way colors and alpha values are mixed to produce a final color
+	/// value for a pixel on the screen. Possible values are "REPLACE", "BLEND", "ADD",
+	/// "SUBTRACT", "LIGHTEST", "DARKEST", "EXCLUSION", "MULTIPLY", and "SCREEN". They
+	/// all follow the same conventions as Processing, so you should check the
+	/// Processing reference for more info.
     pub fn blend_mode(&mut self, mode: &str) {
         if mode == "REPLACE" {
             // glBlendEquation(GL_FUNC_ADD);
