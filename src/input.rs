@@ -93,7 +93,7 @@ impl<'a> Screen<'a> {
 
 	/// Rather than wait for screen.reveal() to be called to see if any events occurred,
 	/// you can manually check for events with this function. Once it has been called,
-	/// you can then check for specific events using the other functions in this module. 
+	/// you can then check for specific events using the other functions in this 
     pub fn poll_events(&mut self) {
         let mut kp = None;
         let mut mp = None;
@@ -127,7 +127,7 @@ impl<'a> Screen<'a> {
                         } if glutin::ElementState::Released == s => {
                             mr = Some(b);
                         }
-                        glutin::WindowEvent::MouseMoved { position, .. } => {
+                        glutin::WindowEvent::CursorMoved { position, .. } => {
                             mpos = position;
                         }
                         _ => (),

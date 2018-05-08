@@ -165,12 +165,14 @@ impl<'a> Screen<'a> {
     in vec4 color;
 
     out vec4 vColor;
+    out vec3 Position;
 
     uniform \
                    mat4 MVP;
 
     void main() {
         vColor = color;
+        Position = position;
         gl_Position = MVP \
                    * vec4(position, 1.0);
     }
