@@ -176,73 +176,61 @@ impl<'a> Screen<'a> {
         }
     }
 
-    // pub fn load_shaders(
-    //     fragFilename: &str,
-    //     vertFilename: &str,
-    //     self: &mut State,
-    //     GLobjs: &mut GLobjStruct,
-    //     shader_bank: &mut HashMap<String, u32>,
-    // ) -> ShaderInfo {
-    //     let mut shader_info = ShaderInfo::default();
-    //     shader_info.ShaderName = rand::thread_rng().gen_ascii_chars().take(16).collect();
-    //     shader_info.FragFilename = fragFilename.to_owned();
-    //     shader_info.VertFilename = vertFilename.to_owned();
-    //
-    //     let fsh = parse_frag_includes(&shader_info);
-    //     let vsh = parse_vert_includes(&shader_info);
-    //
-    //     let program = new_program(&vsh, &fsh);
-    //     shader_bank.insert(shader_info.ShaderName.clone(), program);
-    //     shader_info.Program = program;
-    //     unsafe {
-    //         gl::UseProgram(program);
-    //
-    //         let mut x = 0;
-    //         gl::GenVertexArrays(1, &mut x);
-    //         GLobjs.VAOs.push(x);
-    //         gl::BindVertexArray(*GLobjs.VAOs.last().unwrap());
-    //         shader_info.VaoInd = GLobjs.VAOs.len() as i32 - 1;
-    //         gl::GenBuffers(1, &mut x);
-    //         GLobjs.EBOs.push(x);
-    //         gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, *GLobjs.EBOs.last().unwrap());
-    //         shader_info.EboInd = GLobjs.EBOs.len() as i32 - 1;
-    //
-    //         gl::GenBuffers(1, &mut x);
-    //         GLobjs.POSVBOs.push(x);
-    //         gl::BindBuffer(gl::ARRAY_BUFFER, *GLobjs.POSVBOs.last().unwrap());
-    //         shader_info.PosInd = GLobjs.POSVBOs.len() as i32 - 1;
-    //         let positionAttribute =
-    //             gl::GetAttribLocation(program, CString::new("position").unwrap().as_ptr()) as GLuint;
-    //         gl::EnableVertexAttribArray(positionAttribute);
-    //         gl::VertexAttribPointer(
-    //             positionAttribute,
-    //             3,
-    //             gl::FLOAT,
-    //             gl::FALSE as GLboolean,
-    //             3 * 4,
-    //             ptr::null(),
-    //         );
-    //
-    //         gl::GenBuffers(1, &mut x);
-    //         GLobjs.COLVBOs.push(x);
-    //         gl::BindBuffer(gl::ARRAY_BUFFER, *GLobjs.COLVBOs.last().unwrap());
-    //         shader_info.ColInd = GLobjs.COLVBOs.len() as i32 - 1;
-    //         let colorAttribute =
-    //             gl::GetAttribLocation(program, CString::new("color").unwrap().as_ptr()) as GLuint;
-    //         gl::EnableVertexAttribArray(colorAttribute);
-    //         gl::VertexAttribPointer(
-    //             colorAttribute,
-    //             4,
-    //             gl::FLOAT,
-    //             gl::FALSE as GLboolean,
-    //             4 * 4,
-    //             ptr::null(),
-    //         );
-    //     }
-    //     shader("basicShapes", self, GLobjs, shader_bank);
-    //
-    //     shader_info
-    // }
+    pub fn load_shaders<U: Uniforms>(
+        &mut self,
+        vertFilename: &str,
+        fragFilename: &str,
+        uniforms: U,
+    ) -> ShaderInfo<U> {
+        let vsh = parse_includes(vertFilename);
+        let mut vf = File::create("full.vert").unwrap();
+        vf.write_all(vsh.as_bytes()).unwrap();
+        vf.flush();
+
+        let fsh = parse_includes(fragFilename);
+        let mut ff = File::create("full.frag").unwrap();
+        ff.write_all(fsh.as_bytes()).unwrap();
+        ff.flush();
+
+        let program = match self.display {
+            ScreenType::Window(ref d) => {
+                glium::Program::new(
+                    d,
+                    glium::program::ProgramCreationInput::SourceCode {
+                        vertex_shader: &vsh,
+                        tessellation_control_shader: None,
+                        tessellation_evaluation_shader: None,
+                        geometry_shader: None,
+                        fragment_shader: &fsh,
+                        transform_feedback_varyings: None,
+                        outputs_srgb: true,
+                        uses_point_size: true,
+                    },
+                ).unwrap()
+            }
+            ScreenType::Headless(ref d) => {
+                glium::Program::new(
+                    d,
+                    glium::program::ProgramCreationInput::SourceCode {
+                        vertex_shader: &vsh,
+                        tessellation_control_shader: None,
+                        tessellation_evaluation_shader: None,
+                        geometry_shader: None,
+                        fragment_shader: &fsh,
+                        transform_feedback_varyings: None,
+                        outputs_srgb: true,
+                        uses_point_size: true,
+                    },
+                ).unwrap()
+            }
+        };
+        self.shader_bank.push(program);
+
+        ShaderInfo {
+            ShaderIdx: self.shader_bank.len() - 1,
+            uniforms: Some(uniforms),
+        }
+    }
 
     #[inline]
     pub fn shader<U: Uniforms>(&mut self, whichShader: &ShaderInfo<U>) {

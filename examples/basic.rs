@@ -21,6 +21,7 @@ use p5::shapes::cube::Cube;
 fn main() {
     let normal = Normal::new(0.0, 1.0);
     let mut rng = rand::thread_rng();
+    // uncomment the below two lines and comment the third if you want to test GLFW backend
     // let glf = p5::Screen::init();
     // let mut screen = p5::Screen::new(300, 300, glf, true, false, false);
     let mut screen = p5::Screen::new(300, 300, true, false, true);
