@@ -21,8 +21,8 @@ use p5::shapes::cube::Cube;
 fn main() {
     let normal = Normal::new(0.0, 1.0);
     let mut rng = rand::thread_rng();
-    // let glf = p5::Screen::init();
-    // let mut screen = p5::Screen::new(300, 300, glf, true, false, false);
+    //let glf = p5::Screen::init();
+	//let mut screen = p5::Screen::new(300, 300, glf, true, false, false);
     let mut screen = p5::Screen::new(300, 300, true, false, true);
 
     let mut ftbf = [0; 600];
@@ -105,7 +105,8 @@ fn main() {
                 &[1.0]);
     let c = Cube::new(&screen, &[0.15]);
     screen.fill(&[1.], &[1.], &[1.], &[1.]);
-    let r2 = Rect::new(&screen, &[-0.1], &[0.6], &[0.], &[0.2], &[0.2]).attach_texture(&tex);
+    let mut r2 = Rect::new(&screen, &[-0.1], &[0.6], &[0.], &[0.2], &[0.2]);
+    r2.attach_texture(&tex);
 
     while x < 600 {
         let st = time::precise_time_ns();

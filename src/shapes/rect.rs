@@ -218,8 +218,7 @@ impl<'a> Rect<'a> {
         }
     }
 
-    pub fn attach_texture(mut self, tex: &'a glium::texture::Texture2d) -> Self {
+    pub fn attach_texture(&mut self, tex: &'a glium::texture::Texture2d) {
         self.texture = Some(tex);
-        self
     }
 }

@@ -47,7 +47,7 @@ impl<'a> Screen<'a> {
         let mut window = glutin::WindowBuilder::new();
         if fullscreen {
             let m = events_loop.get_primary_monitor();
-            let wh = m.get_dimensions();
+            let wh: (u32, u32) = m.get_dimensions().into();
             w = wh.0;
             h = wh.1;
             window = glutin::WindowBuilder::new()
@@ -55,19 +55,19 @@ impl<'a> Screen<'a> {
                 .with_visibility(true)
                 .with_fullscreen(Some(m))
                 .with_decorations(false)
-                .with_dimensions(w, h);
+                .with_dimensions(glutin::dpi::LogicalSize::new(w as f64, h as f64));
         } else {
             window = glutin::WindowBuilder::new()
                 .with_title("Processing-rs")
                 .with_visibility(true)
-                .with_dimensions(w, h);
+                .with_dimensions(glutin::dpi::LogicalSize::new(w as f64, h as f64));
         }
         let context = glutin::ContextBuilder::new()
             .with_vsync(vsync)
         //.with_pixel_format(30, 2)
         //.with_depth_buffer(32)
             .with_gl_profile(glutin::GlProfile::Core)
-            .with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (4, 1)));
+            .with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 3)));
         let display = glium::Display::new(window, context, &events_loop).unwrap();
 
         // Load the OpenGL function pointers
@@ -94,9 +94,10 @@ impl<'a> Screen<'a> {
         // }
 
         display.gl_window().show();
-        display.gl_window().set_inner_size(w, h);
+        display.gl_window().set_inner_size(glutin::dpi::LogicalSize::new(w as f64, h as f64));
 
-        if let Some(fb) = display.gl_window().get_inner_size_pixels() {
+        if let Some(fb) = display.gl_window().get_inner_size() {
+        	let fb: (u32, u32) = fb.into();
             w = fb.0;
             h = fb.1;
         }
@@ -636,7 +637,7 @@ impl<'a> Screen<'a> {
         self.events_loop.poll_events(|event| match event {
             glutin::Event::WindowEvent { event, .. } => {
                 match event {
-                    glutin::WindowEvent::Closed => panic!("need a smoother way to quit..."),
+                    glutin::WindowEvent::CloseRequested => panic!("need a smoother way to quit..."),
                     glutin::WindowEvent::KeyboardInput { input, .. }
                         if glutin::ElementState::Pressed == input.state => {
                         match input.virtual_keycode {
@@ -661,7 +662,7 @@ impl<'a> Screen<'a> {
                         mr = Some(b);
                     }
                     glutin::WindowEvent::CursorMoved { position, .. } => {
-                        mpos = position;
+                        mpos = position.into();
                     }
                     _ => (),
                 }
@@ -712,7 +713,7 @@ impl<'a> Screen<'a> {
             match event {
                 glutin::Event::WindowEvent { event, .. } => {
                     match event {
-                        glutin::WindowEvent::Closed => panic!("need a smoother way to quit..."),
+                        glutin::WindowEvent::CloseRequested => panic!("need a smoother way to quit..."),
                         glutin::WindowEvent::KeyboardInput { input, .. }
                             if glutin::ElementState::Pressed == input.state => {
                             match input.virtual_keycode {
@@ -737,7 +738,7 @@ impl<'a> Screen<'a> {
                             mr = Some(b);
                         }
                         glutin::WindowEvent::CursorMoved { position, .. } => {
-                            mpos = position;
+                            mpos = position.into();
                         }
                         _ => (),
                     }
