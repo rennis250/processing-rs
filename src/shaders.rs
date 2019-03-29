@@ -8,6 +8,7 @@ use glium::uniforms::Uniforms;
 //use rand::Rng;
 
 use {Screen, ScreenType};
+use errors::{ProcessingErr, ErrorReadingIncludeLineInShader};
 
 /// This holds information related to a custom shader that has been loaded
 /// by you. It basically just allows `processing-rs` to find the associated program
@@ -80,7 +81,8 @@ impl<U: Uniforms> ShaderInfo<U> {
     }
 
 	/// Return a reference to the uniforms that you assigned to your custom shader.
-    pub fn get_uniforms(&self) -> &U {
+    pub fn get_uniforms(&self) -> &U { // currently, there is no way for uniforms to be
+    									// None, so I feel safe with this as is for now...
         self.uniforms.as_ref().unwrap()
     }
 }
@@ -150,10 +152,10 @@ impl<'a> Screen<'a> {
         &mut self,
         fragFilename: &str,
         uniforms: U,
-    ) -> ShaderInfo<U> {
-        let fsh = parse_includes(fragFilename);
-        let mut ff = File::create("full.frag").unwrap();
-        ff.write_all(fsh.as_bytes()).unwrap();
+    ) -> Result<ShaderInfo<U>, ProcessingErr> {
+        let fsh = parse_includes(fragFilename)?;
+        let mut ff = File::create("full.frag").map_err(|e| ProcessingErr::FullShaderNoCreate(e))?;
+        ff.write_all(fsh.as_bytes()).map_err(|e| ProcessingErr::FullShaderNoWrite(e))?;
         ff.flush();
 
         let vsh = "
@@ -180,7 +182,7 @@ impl<'a> Screen<'a> {
 
         let program = match self.display {
             ScreenType::Window(ref d) => {
-                glium::Program::new(
+                match glium::Program::new(
                     d,
                     glium::program::ProgramCreationInput::SourceCode {
                         vertex_shader: &vsh,
@@ -192,10 +194,13 @@ impl<'a> Screen<'a> {
                         outputs_srgb: true,
                         uses_point_size: true,
                     },
-                ).unwrap()
+                ) {
+                	Ok(res) => res,
+                	Err(e) => return Err(ProcessingErr::ShaderCompileFail(e))
+                }
             }
             ScreenType::Headless(ref d) => {
-                glium::Program::new(
+                match glium::Program::new(
                     d,
                     glium::program::ProgramCreationInput::SourceCode {
                         vertex_shader: &vsh,
@@ -207,15 +212,18 @@ impl<'a> Screen<'a> {
                         outputs_srgb: true,
                         uses_point_size: true,
                     },
-                ).unwrap()
+                ) {
+                	Ok(res) => res,
+                	Err(e) => return Err(ProcessingErr::ShaderCompileFail(e))
+                }
             }
         };
         self.shader_bank.push(program);
 
-        ShaderInfo {
+        Ok(ShaderInfo {
             ShaderIdx: self.shader_bank.len() - 1,
             uniforms: Some(uniforms),
-        }
+        })
     }
 
     // pub fn load_shaders(
@@ -306,26 +314,34 @@ impl<'a> Screen<'a> {
     }
 }
 
-fn parse_includes(filename: &str) -> String {
-    let ff = File::open(filename).unwrap();
+fn parse_includes(filename: &str) -> Result<String, ProcessingErr> {
+    let ff = File::open(filename).map_err(|e| ProcessingErr::ShaderNotFound(e))?;
 
     let mut totalContents: Vec<String> = Vec::with_capacity(1);
+    let mut line_num = 0;
     for line in BufReader::new(ff).lines() {
-        let l = line.unwrap();
+    	line_num += 1;
+        let l = line.map_err(|e| ProcessingErr::ErrorReadingShader(line_num, e))?;
         if l.starts_with("#include") {
             let mut lparts = l.split('<');
-            let ifname = lparts.nth(1).unwrap();
+            let ifname = lparts.nth(1).ok_or(
+            	ProcessingErr::ErrorReadingShader(line_num,
+            		std::io::Error::new(std::io::ErrorKind::InvalidInput,
+            			ErrorReadingIncludeLineInShader::new(
+            				"It is possible that the name for the include file is missing."
+            			)
+            		)
+            	)
+            )?;
             let ln = ifname.len();
-            let mut dat = File::open(&ifname[0..ln - 1]).unwrap();
+            let mut dat = File::open(&ifname[0..ln - 1]).map_err(|e| ProcessingErr::IncludeNotFound(e))?;
             let mut contents = String::new();
-            dat.read_to_string(&mut contents).expect(
-                "something went wrong reading the file",
-            );
+            dat.read_to_string(&mut contents).map_err(|e| ProcessingErr::ErrorReadingInclude(e))?;
             totalContents.push(contents);
         } else {
             totalContents.push(l);
         }
     }
 
-    totalContents.join("\n")
+    Ok(totalContents.join("\n"))
 }

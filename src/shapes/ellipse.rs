@@ -5,6 +5,7 @@ use glium;
 use glium::uniforms::Uniforms;
 
 use {Screen, ScreenType};
+use errors::ProcessingErr;
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
@@ -50,7 +51,7 @@ impl Ellipse {
         zci: &[f64],
         wi: &[f64],
         hi: &[f64],
-    ) -> Self {
+    ) -> Result<Self, ProcessingErr> {
         let mut xc = xci.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut yc = yci.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut zc = zci.iter().map(|&v| v).collect::<Vec<f64>>();
@@ -140,21 +141,25 @@ impl Ellipse {
 
         load_colors(&mut shape, &screen.fillCol);
         let fill_shape_buffer = match screen.display {
-            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
         };
 
         load_colors(&mut shape, &screen.strokeCol);
         let stroke_shape_buffer = match screen.display {
             ScreenType::Window(ref d) => {
-                glium::VertexBuffer::new(d, &shape[1..shape.len() - 1]).unwrap()
+                glium::VertexBuffer::new(d, &shape[1..shape.len() - 1])
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?
             }
             ScreenType::Headless(ref d) => {
-                glium::VertexBuffer::new(d, &shape[1..shape.len() - 1]).unwrap()
+                glium::VertexBuffer::new(d, &shape[1..shape.len() - 1])
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?
             }
         };
 
-        Ellipse {
+        Ok(Ellipse {
             fill_buffer: fill_shape_buffer,
             stroke_buffer: stroke_shape_buffer,
             fill_index_buffer: IndexType::NoBuffer {
@@ -163,6 +168,6 @@ impl Ellipse {
             stroke_index_buffer: IndexType::NoBuffer {
                 ind: glium::index::NoIndices(glium::index::PrimitiveType::LineLoop),
             },
-        }
+        })
     }
 }

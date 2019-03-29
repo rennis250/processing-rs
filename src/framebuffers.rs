@@ -5,6 +5,7 @@ use glium::uniforms::Uniforms;
 use shapes::{Shape, IndexType};
 use shapes::mould::Mould;
 use {Screen, ScreenType};
+use errors::ProcessingErr;
 
 impl<'a> Screen<'a> {
 	/// Create a new framebuffer from a texture. This is necessary if you want
@@ -15,13 +16,13 @@ impl<'a> Screen<'a> {
     pub fn framebuffer(
         &self,
         fbtex: &'a glium::texture::Texture2d,
-    ) -> glium::framebuffer::SimpleFrameBuffer {
+    ) -> Result<glium::framebuffer::SimpleFrameBuffer, ProcessingErr> {
         match self.display {
             ScreenType::Window(ref d) => {
-                glium::framebuffer::SimpleFrameBuffer::new(d, fbtex).unwrap()
+                glium::framebuffer::SimpleFrameBuffer::new(d, fbtex).map_err(|e| ProcessingErr::FBNoCreate(e))
             }
             ScreenType::Headless(ref d) => {
-                glium::framebuffer::SimpleFrameBuffer::new(d, fbtex).unwrap()
+                glium::framebuffer::SimpleFrameBuffer::new(d, fbtex).map_err(|e| ProcessingErr::FBNoCreate(e))
             } 
         }
     }
@@ -45,7 +46,7 @@ impl<'a> Screen<'a> {
         &self,
         shape: &S,
         framebuffer: &mut glium::framebuffer::SimpleFrameBuffer,
-    ) {
+    ) -> Result<(), ProcessingErr> {
         // see if there is a decent way to use this
         // let mut t = self.draw_params.clone();
         // t.depth.write = false;
@@ -67,25 +68,25 @@ impl<'a> Screen<'a> {
                     &IndexType::Buffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.fill_buffer(), ib, prog, &u, &t)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.fill_buffer(), ib, prog, &u, &t)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                 }
-            }
+            };
             if self.strokeStuff {
                 match *shape.stroke_indices() {
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.stroke_buffer(), ib, prog, &u, &t)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                     _ => {}
                 }
-            }
+            };
         } else {
             let prog = &self.shader_bank[0];
             let u = create_uniforms!{self};
@@ -94,26 +95,28 @@ impl<'a> Screen<'a> {
                     &IndexType::Buffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.fill_buffer(), ib, prog, &u, &t)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.fill_buffer(), ib, prog, &u, &t)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                 }
-            }
+            };
             if self.strokeStuff {
                 match *shape.stroke_indices() {
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.stroke_buffer(), ib, prog, &u, &t)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                     _ => {}
                 }
-            }
+            };
         }
+        
+        Ok(())
 
         // if self.drew_points {
         // self.draw_params.smooth = Some(glium::draw_parameters::Smooth::Nicest);
@@ -127,7 +130,7 @@ impl<'a> Screen<'a> {
         &self,
         mould: &Mould<U, S>,
         framebuffer: &mut glium::framebuffer::SimpleFrameBuffer,
-    ) {
+    ) -> Result<(), ProcessingErr> {
         let shader = mould.get_shader();
         let shape = mould.get_shape();
         let prog = &self.shader_bank[shader.get_idx()];
@@ -155,7 +158,7 @@ impl<'a> Screen<'a> {
                             uniforms,
                             &Default::default(),
                         )
-                        .unwrap()
+                        .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                 }
                 &IndexType::NoBuffer { ind: ref ib } => {
                     framebuffer
@@ -166,10 +169,10 @@ impl<'a> Screen<'a> {
                             uniforms,
                             &Default::default(),
                         )
-                        .unwrap()
+                        .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                 }
             }
-        }
+        };
         if self.strokeStuff {
             match *shape.stroke_indices() {
                 &IndexType::NoBuffer { ind: ref ib } => {
@@ -181,10 +184,12 @@ impl<'a> Screen<'a> {
                             uniforms,
                             &Default::default(),
                         )
-                        .unwrap()
+                        .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                 }
                 _ => {}
             }
-        }
+        };
+        
+        Ok(())
     }
 }

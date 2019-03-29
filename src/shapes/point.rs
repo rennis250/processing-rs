@@ -4,6 +4,7 @@ use glium;
 use glium::uniforms::Uniforms;
 
 use {Screen, ScreenType};
+use errors::ProcessingErr;
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
@@ -42,7 +43,7 @@ impl Point {
 	/// Create a new Point to be drawn later. It is specified by its position
 	/// (xi, yi, zi).
     #[inline]
-    pub fn new(screen: &mut Screen, xi: &[f64], yi: &[f64], zi: &[f64]) -> Self {
+    pub fn new(screen: &mut Screen, xi: &[f64], yi: &[f64], zi: &[f64]) -> Result<Self, ProcessingErr> {
         let mut x: Vec<f64> = xi.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut y: Vec<f64> = yi.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut z: Vec<f64> = zi.iter().map(|&v| v).collect::<Vec<f64>>();
@@ -79,12 +80,16 @@ impl Point {
 
             load_colors(&mut shape, &screen.strokeCol);
             let fill_shape_buffer = match screen.display {
-                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
             };
             let stroke_shape_buffer = match screen.display {
-                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
             };
 
             // screen.draw_params = glium::draw_parameters::DrawParameters {
@@ -94,7 +99,7 @@ impl Point {
 
             // screen.drew_points = true;
 
-            return Point {
+            return Ok(Point {
                 fill_buffer: fill_shape_buffer,
                 stroke_buffer: stroke_shape_buffer,
                 fill_index_buffer: IndexType::NoBuffer {
@@ -103,17 +108,21 @@ impl Point {
                 stroke_index_buffer: IndexType::NoBuffer {
                     ind: glium::index::NoIndices(glium::index::PrimitiveType::Points),
                 },
-            };
+            });
         }
 
-        return Point {
+        return Ok(Point {
             fill_buffer: match screen.display {
-                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
-                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &vec![])
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &vec![])
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
             },
             stroke_buffer: match screen.display {
-                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
-                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &vec![])
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &vec![])
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
             },
             fill_index_buffer: IndexType::NoBuffer {
                 ind: glium::index::NoIndices(glium::index::PrimitiveType::Points),
@@ -121,6 +130,6 @@ impl Point {
             stroke_index_buffer: IndexType::NoBuffer {
                 ind: glium::index::NoIndices(glium::index::PrimitiveType::Points),
             },
-        };
+        });
     }
 }

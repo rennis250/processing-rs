@@ -4,6 +4,7 @@ use glium::uniforms::Uniforms;
 
 use shapes::{Shape, IndexType};
 use shapes::mould::Mould;
+use errors::ProcessingErr;
 
 use Screen;
 
@@ -12,7 +13,7 @@ impl<'a> Screen<'a> {
 	/// were precomputed and its buffers were already uploaded to the GPU, drawing
 	/// many shapes should be faster than in a standard Processing environment.
     #[inline]
-    pub fn draw<S: Shape>(&mut self, shape: &S) {
+    pub fn draw<S: Shape>(&mut self, shape: &S) -> Result<(), ProcessingErr> {
         let framebuffer = &mut self.FBO;
         if let Some(tex) = shape.get_texture() {
             let prog = &self.shader_bank[1];
@@ -22,25 +23,25 @@ impl<'a> Screen<'a> {
                     &IndexType::Buffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.fill_buffer(), ib, prog, &u, &self.draw_params)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.fill_buffer(), ib, prog, &u, &self.draw_params)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                 }
-            }
+            };
             if self.strokeStuff {
                 match *shape.stroke_indices() {
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.stroke_buffer(), ib, prog, &u, &self.draw_params)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                     _ => {}
                 }
-            }
+            };
         } else {
             let prog = &self.shader_bank[0];
             let u = create_uniforms!{self};
@@ -49,26 +50,28 @@ impl<'a> Screen<'a> {
                     &IndexType::Buffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.fill_buffer(), ib, prog, &u, &self.draw_params)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.fill_buffer(), ib, prog, &u, &self.draw_params)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                 }
-            }
+            };
             if self.strokeStuff {
                 match *shape.stroke_indices() {
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
                             .draw(*shape.stroke_buffer(), ib, prog, &u, &self.draw_params)
-                            .unwrap()
+                            .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                     }
                     _ => {}
                 }
-            }
+            };
         }
+        
+        Ok(())
 
         // if shape.drew_points {
         // self.draw_params.smooth = Some(glium::draw_parameters::Smooth::Nicest);
@@ -82,7 +85,7 @@ impl<'a> Screen<'a> {
 	/// a shader affect only one object instead of the whole drawing process.
 	/// The concept is borrowed from libCinder.
     #[inline]
-    pub fn draw_mould<S: Shape, U: Uniforms>(&mut self, mould: &Mould<U, S>) {
+    pub fn draw_mould<S: Shape, U: Uniforms>(&mut self, mould: &Mould<U, S>) -> Result<(), ProcessingErr> {
         let shader = mould.get_shader();
         let shape = mould.get_shape();
         let prog = &self.shader_bank[shader.get_idx()];
@@ -93,15 +96,15 @@ impl<'a> Screen<'a> {
                 &IndexType::Buffer { ind: ref ib } => {
                     framebuffer
                         .draw(*shape.fill_buffer(), ib, prog, uniforms, &self.draw_params)
-                        .unwrap()
+                        .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                 }
                 &IndexType::NoBuffer { ind: ref ib } => {
                     framebuffer
                         .draw(*shape.fill_buffer(), ib, prog, uniforms, &self.draw_params)
-                        .unwrap()
+                        .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                 }
             }
-        }
+        };
         if self.strokeStuff {
             match *shape.stroke_indices() {
                 &IndexType::NoBuffer { ind: ref ib } => {
@@ -113,11 +116,13 @@ impl<'a> Screen<'a> {
                             uniforms,
                             &self.draw_params,
                         )
-                        .unwrap()
+                        .map_err(|e| ProcessingErr::FBDrawFailed(e))?
                 }
                 _ => {}
             }
-        }
+        };
+        
+        Ok(())
     }
 
     // #[inline]

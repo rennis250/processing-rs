@@ -105,6 +105,7 @@ pub mod framebuffers;
 pub mod transform;
 pub mod rendering;
 pub mod image;
+pub mod errors;
 
 #[cfg(not(feature = "glfw"))]
 pub mod environment;

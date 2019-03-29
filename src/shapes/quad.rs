@@ -3,6 +3,7 @@ use std::f32;
 use glium;
 
 use {Screen, ScreenType};
+use errors::ProcessingErr;
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
@@ -60,7 +61,7 @@ impl<'a> Quad<'a> {
         x4i: &[f64],
         y4i: &[f64],
         z4i: &[f64],
-    ) -> Self {
+    ) -> Result<Self, ProcessingErr> {
         let mut x1 = x1i.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut y1 = y1i.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut z1 = z1i.iter().map(|&v| v).collect::<Vec<f64>>();
@@ -171,28 +172,32 @@ impl<'a> Quad<'a> {
         let index_buffer = match screen.display {
             ScreenType::Window(ref d) => {
                 glium::IndexBuffer::new(d, glium::index::PrimitiveType::TrianglesList, &elements)
-                    .unwrap()
+                    .map_err(|e| ProcessingErr::IBNoCreate(e))?
             }
             ScreenType::Headless(ref d) => {
                 glium::IndexBuffer::new(d, glium::index::PrimitiveType::TrianglesList, &elements)
-                    .unwrap()
+                    .map_err(|e| ProcessingErr::IBNoCreate(e))?
             }
         };
 
         load_colors(&mut shape, &screen.fillCol);
         let fill_shape_buffer = match screen.display {
-            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+            	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+            	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
         };
 
         load_colors(&mut shape, &screen.strokeCol);
         let stroke_shape_buffer = match screen.display {
-            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+            	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+            	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
         };
 
         // screen.draw(fill_shape_buffer, stroke_shape_buffer, Some(index_buffer));
-        Quad {
+        Ok(Quad {
             fill_buffer: fill_shape_buffer,
             stroke_buffer: stroke_shape_buffer,
             fill_index_buffer: IndexType::Buffer { ind: index_buffer },
@@ -200,7 +205,7 @@ impl<'a> Quad<'a> {
                 ind: glium::index::NoIndices(glium::index::PrimitiveType::LineLoop),
             },
             texture: None,
-        }
+        })
     }
 
     pub fn attach_texture(mut self, tex: &'a glium::texture::Texture2d) -> Self {

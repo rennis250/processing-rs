@@ -18,28 +18,30 @@ use p5::shapes::triangle::Triangle;
 use p5::shapes::quad::Quad;
 use p5::shapes::cube::Cube;
 
-fn main() {
+use p5::errors::ProcessingErr;
+
+fn main() -> Result<(), ProcessingErr> {
     let normal = Normal::new(0.0, 1.0);
     let mut rng = rand::thread_rng();
-    //let glf = p5::Screen::init();
-	//let mut screen = p5::Screen::new(300, 300, glf, true, false, false);
-    let mut screen = p5::Screen::new(300, 300, true, false, true);
+    //let glf = p5::Screen::init()?;
+	//let mut screen = p5::Screen::new(300, 300, glf, true, false, false)?;
+    let mut screen = p5::Screen::new(300, 300, true, false, true)?;
 
     let mut ftbf = [0; 600];
     let mut ft = [0; 600];
     let mut x = 1;
     let mut t = 0.;
 
-    let img = p5::load_image("test.jpg");
-    let (tex, _, _) = screen.texture(&img);
+    let img = p5::load_image("test.jpg")?;
+    let (tex, _, _) = screen.texture(&img)?;
 
     screen.SpaceWait();
     screen.noCursor();
 
     screen.stroke(&[0.], &[0.], &[0.], &[1.]);
     screen.fill(&[0.7], &[0.7], &[0.7], &[1.0]);
-    let e1 = Ellipse::new(&screen, &[0.], &[0.], &[0.], &[0.3], &[0.5]);
-    let e2 = Ellipse::new(&screen, &[-0.5], &[0.5], &[0.], &[0.2], &[0.2]);
+    let e1 = Ellipse::new(&screen, &[0.], &[0.], &[0.], &[0.3], &[0.5])?;
+    let e2 = Ellipse::new(&screen, &[-0.5], &[0.5], &[0.], &[0.2], &[0.2])?;
     let tr1 = Triangle::new(&screen,
                             &[0.3],
                             &[0.75],
@@ -49,7 +51,7 @@ fn main() {
                             &[0.],
                             &[0.86],
                             &[0.75],
-                            &[0.]);
+                            &[0.])?;
     let tr2 = Triangle::new(&screen,
                             &[0.3],
                             &[0.6],
@@ -59,7 +61,7 @@ fn main() {
                             &[0.],
                             &[0.86],
                             &[0.7],
-                            &[0.]);
+                            &[0.])?;
     screen.stroke_weight(5f32);
     let p = Point::new(&mut screen,
                        &(0..10)
@@ -68,7 +70,7 @@ fn main() {
                        &(0..10)
                            .map(|_| normal.ind_sample(&mut rng))
                            .collect::<Vec<_>>(),
-                       &[0.]);
+                       &[0.])?;
     screen.stroke_weight(1f32);
     screen.fill(&[0.], &[0.], &[0.9], &[1.]);
     let q = Quad::new(&screen,
@@ -83,10 +85,10 @@ fn main() {
                       &[0.0],
                       &[-0.2],
                       &[-0.4],
-                      &[0.0]);
-    let l1 = Line::new(&screen, &[0.5], &[-0.4], &[0.], &[0.7], &[-0.5], &[0.]);
-    let r1 = Rect::new(&screen, &[-0.6], &[-0.4], &[0.], &[0.2], &[0.5]);
-    let l2 = Line::new(&screen, &[0.7], &[-0.4], &[0.], &[0.5], &[-0.5], &[0.]);
+                      &[0.0])?;
+    let l1 = Line::new(&screen, &[0.5], &[-0.4], &[0.], &[0.7], &[-0.5], &[0.])?;
+    let r1 = Rect::new(&screen, &[-0.6], &[-0.4], &[0.], &[0.2], &[0.5])?;
+    let l2 = Line::new(&screen, &[0.7], &[-0.4], &[0.], &[0.5], &[-0.5], &[0.])?;
     screen.stroke(&[0.9], &[0.], &[0.], &[1.]);
     let a = Arc::new(&screen,
                      &[-0.6],
@@ -95,45 +97,45 @@ fn main() {
                      &[0.3],
                      &[0.3],
                      &[0.4 * f64::consts::PI],
-                     &[f64::consts::PI]);
+                     &[f64::consts::PI])?;
     screen.stroke(&[0.], &[0.9], &[0.], &[1.]);
     screen.fill(&[1.0], &[1.0], &[1.0], &[1.0]);
-    let e3 = Ellipse::new(&screen, &[0.], &[0.], &[0.], &[0.2], &[0.2]);
+    let e3 = Ellipse::new(&screen, &[0.], &[0.], &[0.], &[0.2], &[0.2])?;
     screen.fill(&[t.sin() / 2. + 0.5],
                 &[t.cos() / 2. + 0.5],
                 &[(t.sin() * t.cos()) / 2. + 0.5],
                 &[1.0]);
-    let c = Cube::new(&screen, &[0.15]);
+    let c = Cube::new(&screen, &[0.15])?;
     screen.fill(&[1.], &[1.], &[1.], &[1.]);
-    let mut r2 = Rect::new(&screen, &[-0.1], &[0.6], &[0.], &[0.2], &[0.2]);
+    let mut r2 = Rect::new(&screen, &[-0.1], &[0.6], &[0.], &[0.2], &[0.2])?;
     r2.attach_texture(&tex);
 
     while x < 600 {
         let st = time::precise_time_ns();
         screen.background(0.94, 0.92, 0.9, 1.0);
         screen.stroke_on();
-        screen.draw(&e1);
-        screen.draw(&e2);
-        screen.draw(&tr1);
-        screen.draw(&tr2);
-        screen.draw(&p);
+        screen.draw(&e1)?;
+        screen.draw(&e2)?;
+        screen.draw(&tr1)?;
+        screen.draw(&tr2)?;
+        screen.draw(&p)?;
         // screen.text("processing-rs", &[0.25], -&[0.85]);
-        screen.draw(&q);
-        screen.draw(&l1);
+        screen.draw(&q)?;
+        screen.draw(&l1)?;
         screen.fill_off();
-        screen.draw(&r1);
-        screen.draw(&l2);
-        screen.draw(&a);
+        screen.draw(&r1)?;
+        screen.draw(&l2)?;
+        screen.draw(&a)?;
         screen.fill_on();
-        screen.draw(&e3);
+        screen.draw(&e3)?;
         screen.pushMatrix();
         screen.rotateY(f32::consts::PI / 10. * t);
         screen.rotateX(f32::consts::PI / 10. * t);
         screen.translate(0.2, -0.5, 0.);
-        screen.draw(&c);
+        screen.draw(&c)?;
         screen.popMatrix();
         screen.stroke_off();
-        screen.draw(&r2);
+        screen.draw(&r2)?;
         // if screen.key_press(p5::Key::Space) {
         //     screen.save("screenshot.png");
         //     println!("key pressed and screenshot saved.");
@@ -143,7 +145,7 @@ fn main() {
             break;
         }
         ftbf[x - 1] = time::precise_time_ns() - st;
-        screen.reveal();
+        screen.reveal()?;
         ft[x - 1] = time::precise_time_ns() - st;
         t += 1. / 60.;
         x += 1;
@@ -171,6 +173,8 @@ fn main() {
         t.push(*x as f64);
     }
     println!("{:?}", std(&t));
+    
+    Ok(())
 }
 
 pub fn mean(x: &Vec<f64>) -> f64 {

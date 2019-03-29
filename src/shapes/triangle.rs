@@ -4,6 +4,7 @@ use glium;
 use glium::uniforms::Uniforms;
 
 use {Screen, ScreenType};
+use errors::ProcessingErr;
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
@@ -53,7 +54,7 @@ impl Triangle {
         x3i: &[f64],
         y3i: &[f64],
         z3i: &[f64],
-    ) -> Self {
+    ) -> Result<Self, ProcessingErr> {
         let mut x1 = x1i.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut y1 = y1i.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut z1 = z1i.iter().map(|&v| v).collect::<Vec<f64>>();
@@ -141,18 +142,22 @@ impl Triangle {
 
         load_colors(&mut shape, &screen.fillCol);
         let fill_shape_buffer = match screen.display {
-            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+            	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+            	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
         };
 
         load_colors(&mut shape, &screen.strokeCol);
         let stroke_shape_buffer = match screen.display {
-            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+            	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+            	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
         };
 
         // screen.draw(fill_shape_buffer, stroke_shape_buffer, Some(index_buffer));
-        Triangle {
+        Ok(Triangle {
             fill_buffer: fill_shape_buffer,
             stroke_buffer: stroke_shape_buffer,
             fill_index_buffer: IndexType::NoBuffer {
@@ -161,6 +166,6 @@ impl Triangle {
             stroke_index_buffer: IndexType::NoBuffer {
                 ind: glium::index::NoIndices(glium::index::PrimitiveType::LineLoop),
             },
-        }
+        })
     }
 }

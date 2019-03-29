@@ -6,13 +6,14 @@ use std::path::Path;
 use image_ext;
 use image_ext::{GenericImage, ImageBuffer};
 use gl;
+use errors::ProcessingErr;
 
 /// A convienence function that will open an image (using the `image` crate) and
 /// transform it to the format that glium expects for textures. Use the output of
 /// this function as the input to screen.texture(). It is not necessary to use this
 /// function, though. You can use whatever image crate and approach you want, just make /// sure that the input to screen.texture() is an image:::RgbaImage.
-pub fn load_image(filename: &str) -> image_ext::RgbaImage {
-    image_ext::open(filename).unwrap().to_rgba()
+pub fn load_image(filename: &str) -> Result<image_ext::RgbaImage, ProcessingErr> {
+    image_ext::open(filename).and_then(|img| Ok(img.to_rgba())).map_err(|e| ProcessingErr::ImageNotFound(e))
 }
 
 use Screen;
@@ -32,7 +33,7 @@ impl<'a> Screen<'a> {
 
 	/// Save the current state of the screen to an image. The format will be determined
 	/// by the file extension.
-    pub fn save(&self, filename: &str) {
+    pub fn save(&self, filename: &str) -> Result<(), ProcessingErr> {
         let mut data = vec![0f32; self.fbSize[0] as usize * self.fbSize[1] as usize * 4 * 4];
         unsafe {
             gl::ReadPixels(
@@ -61,6 +62,6 @@ impl<'a> Screen<'a> {
         }
         let fimg = image_ext::imageops::flip_vertical(&img);
 
-        fimg.save(&Path::new(filename)).unwrap();
+        fimg.save(&Path::new(filename)).map_err(|e| ProcessingErr::ImageNotSaved(e))
     }
 }

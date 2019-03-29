@@ -14,6 +14,7 @@ use shapes::ShapeVertex;
 use shaders::ShaderInfo;
 use {GLmatStruct, FBtexs, Screen, DFBFDVertex};
 use ScreenType;
+use errors::ProcessingErr;
 
 #[cfg(target_os = "macos")]
 use mac_priority;
@@ -38,7 +39,7 @@ impl<'a> Screen<'a> {
         fullscreen: bool,
         preserveAspectRatio: bool,
         vsync: bool,
-    ) -> Screen<'a> {
+    ) -> Result<Screen<'a>, ProcessingErr> {
         #[cfg(target_os = "macos")] mac_priority();
 
         let mut w = width;
@@ -68,7 +69,7 @@ impl<'a> Screen<'a> {
         //.with_depth_buffer(32)
             .with_gl_profile(glutin::GlProfile::Core)
             .with_gl(glutin::GlRequest::Specific(glutin::Api::OpenGl, (3, 3)));
-        let display = glium::Display::new(window, context, &events_loop).unwrap();
+        let display = glium::Display::new(window, context, &events_loop).map_err(|e| ProcessingErr::DisplayNoCreate(e))?;
 
         // Load the OpenGL function pointers
         // TODO: `as *const _` will not be needed once glutin is updated to the latest gl version
@@ -120,7 +121,7 @@ impl<'a> Screen<'a> {
             glium::texture::MipmapsOption::NoMipmap,
             w,
             h,
-        ).unwrap();
+        ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
         let fbid = FBTexture.get_id();
         let depthtexture = glium::texture::DepthTexture2d::empty_with_format(
             &display,
@@ -128,7 +129,7 @@ impl<'a> Screen<'a> {
             glium::texture::MipmapsOption::NoMipmap,
             w,
             h,
-        ).unwrap();
+        ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
         let oh = owning_ref::OwningHandle::new_with_fn(
             Box::new(FBtexs {
                 fbtex: FBTexture,
@@ -140,7 +141,7 @@ impl<'a> Screen<'a> {
                         &display,
                         &(*v).fbtex,
                         &(*v).depthtexture,
-                    ).unwrap(),
+                    ).expect("Could not create a SimpleFrameBuffer with attached DepthBuffer. Please check your graphics card, drivers, and OS."),
                 )
             },
         );
@@ -204,7 +205,7 @@ impl<'a> Screen<'a> {
             fontFace = "/Users/rje/Library/Fonts/Go-Regular.ttf".to_owned();
         }
 
-        let shader_bank = init_shaders(&display, &GlslVersion);
+        let shader_bank = init_shaders(&display, &GlslVersion)?;
 
         let vertex1 = DFBFDVertex {
             position: [-1.0, -1.0],
@@ -224,14 +225,15 @@ impl<'a> Screen<'a> {
         };
         let shape = vec![vertex1, vertex2, vertex3, vertex4];
 
-        let fb_shape_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
+        let fb_shape_buffer = glium::VertexBuffer::new(&display, &shape)
+        	.map_err(|e| ProcessingErr::VBNoCreate(e))?;
         let fb_index_buffer = glium::IndexBuffer::new(
             &display,
             glium::index::PrimitiveType::TrianglesList,
             &[0u16, 1, 2, 0, 2, 3],
-        ).unwrap();
+        ).map_err(|e| ProcessingErr::IBNoCreate(e))?;
 
-        Screen {
+        Ok(Screen {
             // start with default identity matrix, as expected.
             matrices: GLmatStruct {
                 currMatrix: Matrix4::new(
@@ -324,7 +326,7 @@ impl<'a> Screen<'a> {
             mousereleased: None,
             mousepos: (-100., -100.),
             headless: false,
-        }
+        })
     }
 
 	/// This creates a "headless" rendering screen. It's basically the same as a screen
@@ -348,20 +350,20 @@ impl<'a> Screen<'a> {
         //fullscreen: bool,
         preserveAspectRatio: bool,
         //vsync: bool,
-    ) -> Screen<'a> {
+    ) -> Result<Screen<'a>, ProcessingErr> {
         #[cfg(target_os = "macos")] mac_priority();
 
         let mut w = width;
         let mut h = height;
         let events_loop = glutin::EventsLoop::new();
-        let context = glutin::HeadlessRendererBuilder::new(w, h).build().unwrap();
+        let context = glutin::HeadlessRendererBuilder::new(w, h).build().map_err(|e| ProcessingErr::HeadlessRendererNoBuild(e))?;
 
-        unsafe { context.make_current().unwrap() };
+        unsafe { context.make_current().map_err(|e| ProcessingErr::HeadlessContextError(e))? };
         // Load the OpenGL function pointers
         // TODO: `as *const _` will not be needed once glutin is updated to the latest gl version
         gl::load_with(|symbol| context.get_proc_address(symbol) as *const _);
 
-        let display = glium::HeadlessRenderer::new(context).unwrap();
+        let display = glium::HeadlessRenderer::new(context).map_err(|e| ProcessingErr::HeadlessNoCreate(e))?;
 
         let mut GlslVersion;
         {
@@ -400,7 +402,7 @@ impl<'a> Screen<'a> {
             glium::texture::MipmapsOption::NoMipmap,
             w,
             h,
-        ).unwrap();
+        ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
         let fbid = FBTexture.get_id();
         let depthtexture = glium::texture::DepthTexture2d::empty_with_format(
             &display,
@@ -408,20 +410,19 @@ impl<'a> Screen<'a> {
             glium::texture::MipmapsOption::NoMipmap,
             w,
             h,
-        ).unwrap();
+        ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
         let oh = owning_ref::OwningHandle::new_with_fn(
             Box::new(FBtexs {
                 fbtex: FBTexture,
                 depthtexture: depthtexture,
             }),
             |v| unsafe {
-                Box::new(
-                    glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(
+                Box::new(glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(
                         &display,
                         &(*v).fbtex,
                         &(*v).depthtexture,
-                    ).unwrap(),
-                )
+                    ).expect("Could not create a SimpleFrameBuffer with attached DepthBuffer. Please check your graphics card, drivers, and OS."),
+                    )
             },
         );
         let FBTexture = unsafe {
@@ -480,7 +481,7 @@ impl<'a> Screen<'a> {
 
         // glCheckError("Screen initilization.");
 
-        let shader_bank = init_shaders(&display, &GlslVersion);
+        let shader_bank = init_shaders(&display, &GlslVersion)?;
 
         let vertex1 = DFBFDVertex {
             position: [-1.0, -1.0],
@@ -500,14 +501,15 @@ impl<'a> Screen<'a> {
         };
         let shape = vec![vertex1, vertex2, vertex3, vertex4];
 
-        let fb_shape_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
+        let fb_shape_buffer = glium::VertexBuffer::new(&display, &shape)
+        	.map_err(|e| ProcessingErr::VBNoCreate(e))?;
         let fb_index_buffer = glium::IndexBuffer::new(
             &display,
             glium::index::PrimitiveType::TrianglesList,
             &[0u16, 1, 2, 0, 2, 3],
-        ).unwrap();
+        ).map_err(|e| ProcessingErr::IBNoCreate(e))?;
 
-        Screen {
+        Ok(Screen {
             // start with default identity matrix, as expected.
             matrices: GLmatStruct {
                 currMatrix: Matrix4::new(
@@ -600,7 +602,7 @@ impl<'a> Screen<'a> {
             mousereleased: None,
             mousepos: (-100., -100.),
             headless: true,
-        }
+        })
     }
 
 	/// Once you have finished drawing a number of shapes to the screen, you will need
@@ -610,7 +612,7 @@ impl<'a> Screen<'a> {
 	/// to a viewable, monitor buffer. This is standard practice in graphics programming,
 	/// since it makes drawing faster and reduces screen tearing.
     #[inline]
-    pub fn reveal(&mut self) {
+    pub fn reveal(&mut self) -> Result<(), ProcessingErr> {
         let mut target = match self.display {
             ScreenType::Window(ref d) => d.draw(),
             ScreenType::Headless(ref d) => d.draw(),
@@ -626,8 +628,8 @@ impl<'a> Screen<'a> {
                     &uniforms,
                     &Default::default(),
                 )
-                .unwrap();
-            target.finish().unwrap();
+                .map_err(|e| ProcessingErr::DrawFailed(e))?;
+            target.finish().map_err(|e| ProcessingErr::SwapFailed(e))?;
         }
 
         let mut kp = None;
@@ -676,13 +678,15 @@ impl<'a> Screen<'a> {
         self.mousepos = mpos;
 
         self.frameCount += 1;
+        
+        Ok(())
     }
     
     /// This function works exactly the same as screen.reveal(), except that it also
     /// outputs a Vector of raw glutin events, if you need that for any reason. I needed
     /// it once, so I leave it here.
     #[inline]
-    pub fn reveal_with_events(&mut self) -> Vec<glium::glutin::Event> {
+    pub fn reveal_with_events(&mut self) -> Result<Vec<glium::glutin::Event>, ProcessingErr> {
         let mut target = match self.display {
             ScreenType::Window(ref d) => d.draw(),
             ScreenType::Headless(ref d) => d.draw(),
@@ -698,8 +702,8 @@ impl<'a> Screen<'a> {
                     &uniforms,
                     &Default::default(),
                 )
-                .unwrap();
-            target.finish().unwrap();
+                .map_err(|e| ProcessingErr::DrawFailed(e))?;
+            target.finish().map_err(|e| ProcessingErr::SwapFailed(e))?;
         }
 
         let mut kp = None;
@@ -754,7 +758,7 @@ impl<'a> Screen<'a> {
 
         self.frameCount += 1;
 
-        events
+        Ok(events)
     }
 
     // #[inline]
@@ -778,7 +782,7 @@ impl<'a> Screen<'a> {
 pub fn init_shaders(
     display: &glium::backend::Facade,
     GlslVersion: &str,
-) -> Vec<glium::program::Program> {
+) -> Result<Vec<glium::program::Program>, ProcessingErr> {
     let mut shader_bank = Vec::new();
 
     // basicShapes
@@ -829,7 +833,7 @@ pub fn init_shaders(
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).unwrap();
+    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(bs_program);
 
     // texturedShapes
@@ -888,7 +892,7 @@ pub fn init_shaders(
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).unwrap();
+    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(ts_program);
 
     // fontDrawing
@@ -947,7 +951,7 @@ pub fn init_shaders(
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).unwrap();
+    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(fd_program);
 
     // text is rendered with an orthographic projection
@@ -1031,8 +1035,8 @@ pub fn init_shaders(
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).unwrap();
+    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(dfb_program);
 
-    shader_bank
+    Ok(shader_bank)
 }

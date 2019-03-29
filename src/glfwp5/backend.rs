@@ -10,6 +10,7 @@ use glfw::Context;
 use glium;
 use glium::Frame;
 use glium::backend::{Backend, Facade};
+use errors::ProcessingErr;
 
 // in order to create our context, we will need to provide an object which implements
 // the `Backend` trait
@@ -28,17 +29,17 @@ pub struct Display {
 
 impl Display {
     /// Create a new glium `Display` from the given context and window builders.
-    pub fn new(gl_window: glfw::Window) -> Self {
+    pub fn new(gl_window: glfw::Window) -> Result<Self, ProcessingErr> {
         let gl_window = Rc::new(RefCell::new(gl_window));
         let glfw_backend = GLFWBackend(gl_window.clone());
         let framebuffer_dimensions = glfw_backend.get_framebuffer_dimensions();
         let context =
             unsafe { glium::backend::Context::new(glfw_backend, true, Default::default()) };
-        Display {
+        Ok(Display {
             gl_window: gl_window,
-            context: context.unwrap(),
+            context: context.map_err(|e| ProcessingErr::ContextNoCreate(e))?,
             last_framebuffer_dimensions: Cell::new(framebuffer_dimensions),
-        }
+        })
     }
 
     // /// Rebuilds the Display's `GlWindow` with the given window and context builders.

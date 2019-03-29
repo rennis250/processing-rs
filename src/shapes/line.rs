@@ -4,6 +4,7 @@ use glium;
 use glium::uniforms::Uniforms;
 
 use {Screen, ScreenType};
+use errors::ProcessingErr;
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
@@ -50,7 +51,7 @@ impl Line {
         x2i: &[f64],
         y2i: &[f64],
         z2i: &[f64],
-    ) -> Self {
+    ) -> Result<Self, ProcessingErr> {
         let mut x1 = x1i.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut y1 = y1i.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut z1 = z1i.iter().map(|&v| v).collect::<Vec<f64>>();
@@ -134,15 +135,19 @@ impl Line {
             }
 
             let fill_shape_buffer = match screen.display {
-                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
             };
             let stroke_shape_buffer = match screen.display {
-                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
             };
 
-            return Line {
+            return Ok(Line {
                 fill_buffer: fill_shape_buffer,
                 stroke_buffer: stroke_shape_buffer,
                 fill_index_buffer: IndexType::NoBuffer {
@@ -151,17 +156,21 @@ impl Line {
                 stroke_index_buffer: IndexType::NoBuffer {
                     ind: glium::index::NoIndices(glium::index::PrimitiveType::LinesList),
                 },
-            };
+            });
         }
 
-        return Line {
+        return Ok(Line {
             fill_buffer: match screen.display {
-                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
-                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &vec![])
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &vec![])
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
             },
             stroke_buffer: match screen.display {
-                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
-                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &vec![]).unwrap(),
+                ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &vec![])
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+                ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &vec![])
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
             },
             fill_index_buffer: IndexType::NoBuffer {
                 ind: glium::index::NoIndices(glium::index::PrimitiveType::LinesList),
@@ -169,6 +178,6 @@ impl Line {
             stroke_index_buffer: IndexType::NoBuffer {
                 ind: glium::index::NoIndices(glium::index::PrimitiveType::LinesList),
             },
-        };
+        });
     }
 }

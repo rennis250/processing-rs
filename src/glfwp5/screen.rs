@@ -25,6 +25,7 @@ use shapes::ShapeVertex;
 use shaders::ShaderInfo;
 use {Screen, GLmatStruct, FBtexs, DFBFDVertex};
 use ScreenType;
+use errors::ProcessingErr;
 
 #[cfg(target_os = "macos")]
 use mac_priority;
@@ -34,8 +35,14 @@ impl<'a> Screen<'a> {
 	/// Screen::new(). It is required by the glfw library. The result will be a
 	/// glfw::Glfw struct that should be passed to Screen::new() as input, which will
 	/// handle the rest of the initialization.
-    pub fn init() -> glfw::Glfw {
-        glfw::init(glfw::FAIL_ON_ERRORS).unwrap()
+    pub fn init() -> Result<glfw::Glfw, ProcessingErr> {
+        match glfw::init(glfw::FAIL_ON_ERRORS) {
+			Ok(res) => Ok(res),
+			Err(e) => match e {
+				glfw::InitError::AlreadyInitialized => Err(ProcessingErr::GLFWAlreadyInited),
+				glfw::InitError::Internal => Err(ProcessingErr::GLFWInternal)
+			}
+        }
     }
 
 	/// Create a new Screen struct with a given width and height. Also, specify if
@@ -61,7 +68,7 @@ impl<'a> Screen<'a> {
         fullscreen: bool,
         preserveAspectRatio: bool,
         headless: bool
-    ) -> Screen<'a> {
+    ) -> Result<Screen<'a>, ProcessingErr> {
         #[cfg(target_os = "macos")] mac_priority();
 
         glfw.window_hint(glfw::WindowHint::Visible(!headless));
@@ -87,11 +94,11 @@ impl<'a> Screen<'a> {
         let window;
         if fullscreen {
             let (mut win, e) = glfw.create_window(w, h, "processingrs", glfw::WindowMode::Windowed)
-                .expect("Failed to create GLFW window.");
+                .ok_or(ProcessingErr::GLFWWindowNoCreate)?;
             glfw.with_primary_monitor_mut(|_: &mut _, m: Option<&glfw::Monitor>| {
-                let monitor = m.unwrap();
+                let monitor = m.expect("Did not get access to a monitor.");
 
-                let mode = monitor.get_video_mode().unwrap();
+                let mode = monitor.get_video_mode().expect("Did not get access to the monitors preferred video mode.");
 
                 w = mode.width;
                 h = mode.height;
@@ -109,7 +116,7 @@ impl<'a> Screen<'a> {
             events_loop = e;
         } else {
             let (mut win, e) = glfw.create_window(w, h, "processingrs", glfw::WindowMode::Windowed)
-                .unwrap();
+                .ok_or(ProcessingErr::GLFWWindowNoCreate)?;
             window = win;
             events_loop = e;
         }
@@ -123,7 +130,7 @@ impl<'a> Screen<'a> {
         // glfw.window_hint(glfw::WindowHint::RefreshRate(Some(frameRate as u32)));
         // }
 
-        let display = Display::new(window);
+        let display = Display::new(window)?;
 
         display.gl_window_mut().set_key_polling(true);
         display.gl_window_mut().make_current();
@@ -170,7 +177,7 @@ impl<'a> Screen<'a> {
             glium::texture::MipmapsOption::NoMipmap,
             w,
             h,
-        ).unwrap();
+        ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
         let fbid = FBTexture.get_id();
         let depthtexture = glium::texture::DepthTexture2d::empty_with_format(
             &display,
@@ -178,7 +185,7 @@ impl<'a> Screen<'a> {
             glium::texture::MipmapsOption::NoMipmap,
             w,
             h,
-        ).unwrap();
+        ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
         let oh = owning_ref::OwningHandle::new_with_fn(
             Box::new(FBtexs {
                 fbtex: FBTexture,
@@ -190,7 +197,7 @@ impl<'a> Screen<'a> {
                         &display,
                         &(*v).fbtex,
                         &(*v).depthtexture,
-                    ).unwrap(),
+                    ).expect("Could not create a SimpleFrameBuffer with attached DepthBuffer. Please check your graphics card, drivers, and OS."),
                 )
             },
         );
@@ -253,7 +260,7 @@ impl<'a> Screen<'a> {
             fontFace = "/Users/rje/Library/Fonts/Go-Regular.ttf".to_owned();
         }
 
-        let shader_bank = init_shaders(&display, &GlslVersion);
+        let shader_bank = init_shaders(&display, &GlslVersion)?;
 
         let vertex1 = DFBFDVertex {
             position: [-1.0, -1.0],
@@ -273,12 +280,13 @@ impl<'a> Screen<'a> {
         };
         let shape = vec![vertex1, vertex2, vertex3, vertex4];
 
-        let fb_shape_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
+        let fb_shape_buffer = glium::VertexBuffer::new(&display, &shape)
+        	.map_err(|e| ProcessingErr::VBNoCreate(e))?;
         let fb_index_buffer = glium::IndexBuffer::new(
             &display,
             glium::index::PrimitiveType::TrianglesList,
             &[0u16, 1, 2, 0, 2, 3],
-        ).unwrap();
+        ).map_err(|e| ProcessingErr::IBNoCreate(e))?;
 
         display.gl_window_mut().swap_buffers();
         glfw.poll_events();
@@ -288,7 +296,7 @@ impl<'a> Screen<'a> {
             panic!("Window prematurely terminated.");
         }
 
-        Screen {
+        Ok(Screen {
             // start with default identity matrix, as expected.
             matrices: GLmatStruct {
                 currMatrix: Matrix4::new(
@@ -382,7 +390,7 @@ impl<'a> Screen<'a> {
             mousereleased: None,
             mousepos: (-100., -100.),
             headless: headless,
-        }
+        })
     }
 
 	
@@ -393,7 +401,7 @@ impl<'a> Screen<'a> {
 	/// to a viewable, monitor buffer. This is standard practice in graphics programming,
 	/// since it makes drawing faster and reduces screen tearing.
     #[inline]
-    pub fn reveal(&mut self) {
+    pub fn reveal(&mut self) -> Result<(), ProcessingErr> {
         let mut target = match self.display {
             ScreenType::Window(ref d) => d.draw(),
             ScreenType::Headless(ref d) => d.draw(),
@@ -409,8 +417,8 @@ impl<'a> Screen<'a> {
                     &uniforms,
                     &Default::default(),
                 )
-                .unwrap();
-            target.finish().unwrap();
+                .map_err(|e| ProcessingErr::DrawFailed(e))?;
+            target.finish().map_err(|e| ProcessingErr::SwapFailed(e))?;
         }
 
         let mut kp = None;
@@ -534,6 +542,8 @@ impl<'a> Screen<'a> {
         self.mousepos = mpos;
 
         self.frameCount += 1;
+        
+        Ok(())
     }
 
 	/// This will safely close a window and drop the Screen struct associated with it.
@@ -558,7 +568,7 @@ impl<'a> Screen<'a> {
 //     window.show();
 // }
 
-pub fn init_shaders(display: &Display, GlslVersion: &str) -> Vec<glium::program::Program> {
+pub fn init_shaders(display: &Display, GlslVersion: &str) -> Result<Vec<glium::program::Program>, ProcessingErr> {
     let mut shader_bank = Vec::new();
 
     // basicShapes
@@ -609,7 +619,7 @@ pub fn init_shaders(display: &Display, GlslVersion: &str) -> Vec<glium::program:
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).unwrap();
+    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(bs_program);
 
     // texturedShapes
@@ -668,7 +678,7 @@ pub fn init_shaders(display: &Display, GlslVersion: &str) -> Vec<glium::program:
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).unwrap();
+    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(ts_program);
 
     // fontDrawing
@@ -727,7 +737,7 @@ pub fn init_shaders(display: &Display, GlslVersion: &str) -> Vec<glium::program:
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).unwrap();
+    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(fd_program);
 
     // text is rendered with an orthographic projection
@@ -811,8 +821,8 @@ pub fn init_shaders(display: &Display, GlslVersion: &str) -> Vec<glium::program:
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).unwrap();
+    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(dfb_program);
 
-    shader_bank
+    Ok(shader_bank)
 }

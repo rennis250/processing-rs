@@ -1,6 +1,7 @@
 use glium;
 
 use {Screen, ScreenType};
+use errors::ProcessingErr;
 
 use shapes::{Shape, ShapeVertex, IndexType, load_colors};
 
@@ -38,7 +39,7 @@ impl Cube {
 	/// Create a new Cube of a given scale (s) to be drawn later.
 	/// A scale of 1 is the standard "unit" cube and any other values
 	/// give back a version of this cube scaled up or down.
-    pub fn new(screen: &Screen, s: &[f64]) -> Self {
+    pub fn new(screen: &Screen, s: &[f64]) -> Result<Self, ProcessingErr> {
         let cubeVertices = [
             -1.0f32,
             -1.0,
@@ -206,18 +207,22 @@ impl Cube {
 
         load_colors(&mut shape, &screen.fillCol);
         let fill_shape_buffer = match screen.display {
-            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
         };
 
         load_colors(&mut shape, &screen.strokeCol);
         let stroke_shape_buffer = match screen.display {
-            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
-            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape).unwrap(),
+            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
+                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
         };
 
         // screen.draw(fill_shape_buffer, stroke_shape_buffer, Some(index_buffer));
-        Cube {
+        Ok(Cube {
             fill_buffer: fill_shape_buffer,
             stroke_buffer: stroke_shape_buffer,
             fill_index_buffer: IndexType::NoBuffer {
@@ -226,6 +231,6 @@ impl Cube {
             stroke_index_buffer: IndexType::NoBuffer {
                 ind: glium::index::NoIndices(glium::index::PrimitiveType::LineLoop),
             },
-        }
+        })
     }
 }
