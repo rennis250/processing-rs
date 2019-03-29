@@ -48,7 +48,7 @@ impl<'a> Screen<'a> {
         let mut window = glutin::WindowBuilder::new();
         if fullscreen {
             let m = events_loop.get_primary_monitor();
-            let wh: (u32, u32) = m.get_dimensions().into();
+            let wh = m.get_dimensions();
             w = wh.0;
             h = wh.1;
             window = glutin::WindowBuilder::new()
@@ -56,12 +56,12 @@ impl<'a> Screen<'a> {
                 .with_visibility(true)
                 .with_fullscreen(Some(m))
                 .with_decorations(false)
-                .with_dimensions(glutin::dpi::LogicalSize::new(w as f64, h as f64));
+                .with_dimensions(w, h);
         } else {
             window = glutin::WindowBuilder::new()
                 .with_title("Processing-rs")
                 .with_visibility(true)
-                .with_dimensions(glutin::dpi::LogicalSize::new(w as f64, h as f64));
+                .with_dimensions(w, h);
         }
         let context = glutin::ContextBuilder::new()
             .with_vsync(vsync)
@@ -95,10 +95,9 @@ impl<'a> Screen<'a> {
         // }
 
         display.gl_window().show();
-        display.gl_window().set_inner_size(glutin::dpi::LogicalSize::new(w as f64, h as f64));
+        display.gl_window().set_inner_size(w, h);
 
-        if let Some(fb) = display.gl_window().get_inner_size() {
-        	let fb: (u32, u32) = fb.into();
+        if let Some(fb) = display.gl_window().get_inner_size_pixels() {
             w = fb.0;
             h = fb.1;
         }
@@ -639,7 +638,7 @@ impl<'a> Screen<'a> {
         self.events_loop.poll_events(|event| match event {
             glutin::Event::WindowEvent { event, .. } => {
                 match event {
-                    glutin::WindowEvent::CloseRequested => panic!("need a smoother way to quit..."),
+                    glutin::WindowEvent::Closed => panic!("need a smoother way to quit..."),
                     glutin::WindowEvent::KeyboardInput { input, .. }
                         if glutin::ElementState::Pressed == input.state => {
                         match input.virtual_keycode {
@@ -664,7 +663,7 @@ impl<'a> Screen<'a> {
                         mr = Some(b);
                     }
                     glutin::WindowEvent::CursorMoved { position, .. } => {
-                        mpos = position.into();
+                        mpos = position;
                     }
                     _ => (),
                 }
@@ -717,7 +716,7 @@ impl<'a> Screen<'a> {
             match event {
                 glutin::Event::WindowEvent { event, .. } => {
                     match event {
-                        glutin::WindowEvent::CloseRequested => panic!("need a smoother way to quit..."),
+                        glutin::WindowEvent::Closed => panic!("need a smoother way to quit..."),
                         glutin::WindowEvent::KeyboardInput { input, .. }
                             if glutin::ElementState::Pressed == input.state => {
                             match input.virtual_keycode {
@@ -742,7 +741,7 @@ impl<'a> Screen<'a> {
                             mr = Some(b);
                         }
                         glutin::WindowEvent::CursorMoved { position, .. } => {
-                            mpos = position.into();
+                            mpos = position;
                         }
                         _ => (),
                     }

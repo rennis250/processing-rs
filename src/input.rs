@@ -103,7 +103,7 @@ impl<'a> Screen<'a> {
             match event {
                 glutin::Event::WindowEvent { event, .. } => {
                     match event {
-                        glutin::WindowEvent::CloseRequested => panic!("need a smoother way to quit..."),
+                        glutin::WindowEvent::Closed => panic!("need a smoother way to quit..."),
                         glutin::WindowEvent::KeyboardInput { input, .. }
                             if glutin::ElementState::Pressed == input.state => {
                             match input.virtual_keycode {
@@ -128,7 +128,7 @@ impl<'a> Screen<'a> {
                             mr = Some(b);
                         }
                         glutin::WindowEvent::CursorMoved { position, .. } => {
-                            mpos = position.into();
+                            mpos = position;
                         }
                         _ => (),
                     }
