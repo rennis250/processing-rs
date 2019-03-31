@@ -2,7 +2,6 @@ use std::f32;
 use std::f64;
 
 use glium;
-use glium::uniforms::Uniforms;
 
 use {Screen, ScreenType};
 use errors::ProcessingErr;
@@ -54,69 +53,70 @@ impl Ellipse {
     ) -> Result<Self, ProcessingErr> {
         let mut xc = xci.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut yc = yci.iter().map(|&v| v).collect::<Vec<f64>>();
-        let mut zc = zci.iter().map(|&v| v).collect::<Vec<f64>>();
+        let zc = zci.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut w = wi.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut h = hi.iter().map(|&v| v).collect::<Vec<f64>>();
-        if screen.preserveAspectRatio && screen.aspectRatio != 1f32 {
-            if screen.aspectRatio > 1f32 {
+        if screen.preserve_aspect_ratio && screen.aspect_ratio != 1f32 {
+            if screen.aspect_ratio > 1f32 {
                 for i in 0..w.len() {
-                    xc[i] = xc[i] / screen.aspectRatio as f64;
-                    w[i] = w[i] / screen.aspectRatio as f64;
+                    xc[i] = xc[i] / screen.aspect_ratio as f64;
+                    w[i] = w[i] / screen.aspect_ratio as f64;
                 }
             } else {
                 for i in 0..w.len() {
-                    yc[i] = yc[i] * screen.aspectRatio as f64;
-                    h[i] = h[i] * screen.aspectRatio as f64;
+                    yc[i] = yc[i] * screen.aspect_ratio as f64;
+                    h[i] = h[i] * screen.aspect_ratio as f64;
                 }
             }
         }
 
-        if screen.ellipseMode == "CENTER" {
+        if screen.ellipse_mode == "CENTER" {
             for i in 0..w.len() {
                 w[i] = w[i] / 2.0;
                 h[i] = h[i] / 2.0;
             }
-        } else if screen.ellipseMode == "CORNER" {
+        } else if screen.ellipse_mode == "CORNER" {
             //  w = w ./ 2
             //  h = h ./ 2
             //  xc = xc .+ w
             //  yc = yc .+ h
-        } else if screen.ellipseMode == "CORNERS" {
+        } else if screen.ellipse_mode == "CORNERS" {
             //  xc = (w .- xc)./2
             //  yc = (h .- yc)./2
             //  w = w ./ 2
             //  h = h ./ 2
         }
 
-        let numSlices = 200.0 + 2.0;
-        let mut c: Vec<f64> = Vec::with_capacity(numSlices as usize - 1);
-        let mut s: Vec<f64> = Vec::with_capacity(numSlices as usize - 1);
-        let step = 1.0 / (numSlices - 1.0);
+        let num_slices = 200.0 + 2.0;
+        let mut c: Vec<f64> = Vec::with_capacity(num_slices as usize - 1);
+        let mut s: Vec<f64> = Vec::with_capacity(num_slices as usize - 1);
+        let step = 1.0 / (num_slices - 1.0);
         let start = 0.0;
         let end = 2.0 * f64::consts::PI;
         let diff = end - start;
-        for i in 0..numSlices as usize - 1 {
+        for i in 0..num_slices as usize - 1 {
             let p = start + diff * i as f64 * step;
             c.push(p.cos());
             s.push(p.sin());
         }
-        let p = start + diff * (numSlices - 1.) * step;
+        let p = start + diff * (num_slices - 1.) * step;
         c.push(p.cos());
         s.push(p.sin());
 
         let eps = f32::EPSILON;
         let mut shape = vec![];
         for (i, _) in xc.iter().enumerate() {
-            for j in 0..numSlices as usize {
+            for j in 0..num_slices as usize {
                 let vertex = if j == 0 {
                     ShapeVertex {
                         position: [
                             xc[i] as f32,
                             yc[i] as f32,
-                            // if z1[c] == 0.0 {
-                            eps * i as f32 // } else {
-                                           // z1[c] as f32
-                                           // },
+                            if zc[i] == 0.0 {
+                                eps * i as f32
+                            } else {
+                                zc[i] as f32
+                            },
                         ],
                         color: [0.0, 0.0, 0.0, 0.0],
                         texcoord: [0f32, 0.],
@@ -126,10 +126,11 @@ impl Ellipse {
                         position: [
                             (c[j - 1] * w[i] + xc[i]) as f32,
                             (s[j - 1] * h[i] + yc[i]) as f32,
-                            // if z1[c] == 0.0 {
-                            eps * i as f32 // } else {
-                                           // z1[c] as f32
-                                           // },
+                            if zc[i] == 0.0 {
+                                eps * i as f32
+                            } else {
+                                zc[i] as f32
+                            },
                         ],
                         color: [0.0, 0.0, 0.0, 0.0],
                         texcoord: [0f32, 0.],
@@ -139,7 +140,7 @@ impl Ellipse {
             }
         }
 
-        load_colors(&mut shape, &screen.fillCol);
+        load_colors(&mut shape, &screen.fill_col);
         let fill_shape_buffer = match screen.display {
             ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
                 	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
@@ -147,7 +148,7 @@ impl Ellipse {
                 	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
         };
 
-        load_colors(&mut shape, &screen.strokeCol);
+        load_colors(&mut shape, &screen.stroke_col);
         let stroke_shape_buffer = match screen.display {
             ScreenType::Window(ref d) => {
                 glium::VertexBuffer::new(d, &shape[1..shape.len() - 1])

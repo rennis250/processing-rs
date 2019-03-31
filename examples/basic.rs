@@ -1,4 +1,5 @@
-#[macro_use]
+#![allow(deprecated)]
+
 extern crate processing as p5;
 extern crate num_traits;
 extern crate time;
@@ -35,8 +36,8 @@ fn main() -> Result<(), ProcessingErr> {
     let img = p5::load_image("test.jpg")?;
     let (tex, _, _) = screen.texture(&img)?;
 
-    screen.SpaceWait();
-    screen.noCursor();
+    screen.space_wait();
+    screen.no_cursor()?;
 
     screen.stroke(&[0.], &[0.], &[0.], &[1.]);
     screen.fill(&[0.7], &[0.7], &[0.7], &[1.0]);
@@ -70,7 +71,9 @@ fn main() -> Result<(), ProcessingErr> {
                        &(0..10)
                            .map(|_| normal.ind_sample(&mut rng))
                            .collect::<Vec<_>>(),
-                       &[0.])?;
+                       &(0..10)
+                           .map(|_| 0.)
+                           .collect::<Vec<_>>())?;
     screen.stroke_weight(1f32);
     screen.fill(&[0.], &[0.], &[0.9], &[1.]);
     let q = Quad::new(&screen,
@@ -128,19 +131,19 @@ fn main() -> Result<(), ProcessingErr> {
         screen.draw(&a)?;
         screen.fill_on();
         screen.draw(&e3)?;
-        screen.pushMatrix();
-        screen.rotateY(f32::consts::PI / 10. * t);
-        screen.rotateX(f32::consts::PI / 10. * t);
+        screen.push_matrix();
+        screen.rotate_y(f32::consts::PI / 10. * t);
+        screen.rotate_x(f32::consts::PI / 10. * t);
         screen.translate(0.2, -0.5, 0.);
         screen.draw(&c)?;
-        screen.popMatrix();
+        screen.pop_matrix();
         screen.stroke_off();
         screen.draw(&r2)?;
         // if screen.key_press(p5::Key::Space) {
         //     screen.save("screenshot.png");
         //     println!("key pressed and screenshot saved.");
         // }
-        if screen.MousePress(p5::MouseButton::Left) {
+        if screen.mouse_press(p5::MouseButton::Left) {
             println!("bye!");
             break;
         }

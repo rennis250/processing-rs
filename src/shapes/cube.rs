@@ -40,7 +40,7 @@ impl Cube {
 	/// A scale of 1 is the standard "unit" cube and any other values
 	/// give back a version of this cube scaled up or down.
     pub fn new(screen: &Screen, s: &[f64]) -> Result<Self, ProcessingErr> {
-        let cubeVertices = [
+        let cube_vertices = [
             -1.0f32,
             -1.0,
             -1.0,
@@ -157,9 +157,9 @@ impl Cube {
             for _ in 0..35 {
                 let vertex = ShapeVertex {
                     position: [
-                        cubeVertices[x] * s[c] as f32,
-                        cubeVertices[x + 1] * s[c] as f32,
-                        cubeVertices[x + 2] * s[c] as f32,
+                        cube_vertices[x] * s[c] as f32,
+                        cube_vertices[x + 1] * s[c] as f32,
+                        cube_vertices[x + 2] * s[c] as f32,
                     ],
                     color: [0.0, 0.0, 0.0, 0.0],
                     texcoord: [0f32, 0.],
@@ -171,7 +171,7 @@ impl Cube {
 
         // if RenderState.drawTexture
         //	// texcoords
-        //	texData = zeros(GLfloat, numSlices*4*len(xc))
+        //	texData = zeros(GLfloat, num_slices*4*len(xc))
         //	texData[8:vertexStride:end] = 0
         //	texData[9:vertexStride:end] = 0
 
@@ -205,7 +205,7 @@ impl Cube {
         //	index += 6
         // end
 
-        load_colors(&mut shape, &screen.fillCol);
+        load_colors(&mut shape, &screen.fill_col);
         let fill_shape_buffer = match screen.display {
             ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
                 	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
@@ -213,7 +213,7 @@ impl Cube {
                 	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
         };
 
-        load_colors(&mut shape, &screen.strokeCol);
+        load_colors(&mut shape, &screen.stroke_col);
         let stroke_shape_buffer = match screen.display {
             ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
                 	.map_err(|e| ProcessingErr::VBNoCreate(e))?,

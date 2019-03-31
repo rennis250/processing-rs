@@ -1,7 +1,6 @@
 use std::f32;
 
 use glium;
-use glium::uniforms::Uniforms;
 
 use {Screen, ScreenType};
 use errors::ProcessingErr;
@@ -46,20 +45,20 @@ impl Point {
     pub fn new(screen: &mut Screen, xi: &[f64], yi: &[f64], zi: &[f64]) -> Result<Self, ProcessingErr> {
         let mut x: Vec<f64> = xi.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut y: Vec<f64> = yi.iter().map(|&v| v).collect::<Vec<f64>>();
-        let mut z: Vec<f64> = zi.iter().map(|&v| v).collect::<Vec<f64>>();
-        if screen.preserveAspectRatio {
-            if screen.aspectRatio > 1f32 {
+        let z: Vec<f64> = zi.iter().map(|&v| v).collect::<Vec<f64>>();
+        if screen.preserve_aspect_ratio {
+            if screen.aspect_ratio > 1f32 {
                 for i in 0..x.len() {
-                    x[i] = x[i] / screen.aspectRatio as f64;
+                    x[i] = x[i] / screen.aspect_ratio as f64;
                 }
             } else {
                 for i in 0..x.len() {
-                    y[i] = y[i] * screen.aspectRatio as f64;
+                    y[i] = y[i] * screen.aspect_ratio as f64;
                 }
             }
         }
 
-        if screen.strokeStuff {
+        if screen.stroke_stuff {
             let eps = f32::EPSILON;
             let mut shape = vec![];
             for (i, _) in x.iter().enumerate() {
@@ -67,10 +66,11 @@ impl Point {
                     position: [
                         x[i] as f32,
                         y[i] as f32,
-                        // if z1[c] == 0.0 {
-                        eps * i as f32 // } else {
-                                       // z1[c] as f32
-                                       // },
+                        if z[i] == 0.0 {
+                            eps * i as f32
+                        } else {
+                            z[i] as f32
+                        },
                     ],
                     color: [0.0, 0.0, 0.0, 0.0],
                     texcoord: [0f32, 0.],
@@ -78,7 +78,7 @@ impl Point {
                 shape.push(vertex);
             }
 
-            load_colors(&mut shape, &screen.strokeCol);
+            load_colors(&mut shape, &screen.stroke_col);
             let fill_shape_buffer = match screen.display {
                 ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
                 	.map_err(|e| ProcessingErr::VBNoCreate(e))?,

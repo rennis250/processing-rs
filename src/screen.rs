@@ -1,5 +1,4 @@
 use std::str;
-use std::collections::HashMap;
 
 use owning_ref;
 use Matrix4;
@@ -7,11 +6,8 @@ use gl;
 use glium;
 use glium::backend::Facade;
 use glium::{glutin, Surface, GlObject};
-use glium::uniforms::Uniforms;
 use glium::glutin::GlContext;
 
-use shapes::ShapeVertex;
-use shaders::ShaderInfo;
 use {GLmatStruct, FBtexs, Screen, DFBFDVertex};
 use ScreenType;
 use errors::ProcessingErr;
@@ -37,7 +33,7 @@ impl<'a> Screen<'a> {
         width: u32,
         height: u32,
         fullscreen: bool,
-        preserveAspectRatio: bool,
+        preserve_aspect_ratio: bool,
         vsync: bool,
     ) -> Result<Screen<'a>, ProcessingErr> {
         #[cfg(target_os = "macos")] mac_priority();
@@ -45,7 +41,7 @@ impl<'a> Screen<'a> {
         let mut w = width;
         let mut h = height;
         let events_loop = glutin::EventsLoop::new();
-        let mut window = glutin::WindowBuilder::new();
+        let window;
         if fullscreen {
             let m = events_loop.get_primary_monitor();
             let wh = m.get_dimensions();
@@ -77,20 +73,20 @@ impl<'a> Screen<'a> {
             (*display.gl_window()).get_proc_address(symbol) as *const _
         });
 
-        let mut GlslVersion;
+        let mut glsl_version;
         {
             let glt = display.get_context().get_opengl_version();
-            GlslVersion = format!("{}{:0<2}", glt.1, glt.2).to_owned();
-            println!("OpenGL version {}", GlslVersion);
+            glsl_version = format!("{}{:0<2}", glt.1, glt.2).to_owned();
+            println!("OpenGL version {}", glsl_version);
         }
 
-        // if frameRate == 0 {
+        // if frame_rate == 0 {
         // glfw.window_hint(glfw::WindowHint::RefreshRate(Some(60)));
-        // } else if frameRate == -1 {
+        // } else if frame_rate == -1 {
         // let system determine frame rate
         // } else {
         // glfw.window_hint(glfw::WindowHint::RefreshRate(
-        // Some(frameRate as u32),
+        // Some(frame_rate as u32),
         // ));
         // }
 
@@ -102,26 +98,26 @@ impl<'a> Screen<'a> {
             h = fb.1;
         }
 
-        let aspectRatio = w as f32 / h as f32;
+        let aspect_ratio = w as f32 / h as f32;
 
-        let fbSize = vec![w, h];
+        let fb_size = vec![w, h];
         unsafe {
             gl::Viewport(
                 0,
                 0,
-                fbSize[0] as gl::types::GLsizei,
-                fbSize[1] as gl::types::GLsizei,
+                fb_size[0] as gl::types::GLsizei,
+                fb_size[1] as gl::types::GLsizei,
             );
         }
 
-        let FBTexture = glium::texture::Texture2d::empty_with_format(
+        let fbtexture = glium::texture::Texture2d::empty_with_format(
             &display,
             glium::texture::UncompressedFloatFormat::F32F32F32F32,
             glium::texture::MipmapsOption::NoMipmap,
             w,
             h,
         ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
-        let fbid = FBTexture.get_id();
+        let fbid = fbtexture.get_id();
         let depthtexture = glium::texture::DepthTexture2d::empty_with_format(
             &display,
             glium::texture::DepthFormat::F32,
@@ -131,7 +127,7 @@ impl<'a> Screen<'a> {
         ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
         let oh = owning_ref::OwningHandle::new_with_fn(
             Box::new(FBtexs {
-                fbtex: FBTexture,
+                fbtex: fbtexture,
                 depthtexture: depthtexture,
             }),
             |v| unsafe {
@@ -144,7 +140,7 @@ impl<'a> Screen<'a> {
                 )
             },
         );
-        let FBTexture = unsafe {
+        let fbtexture = unsafe {
             glium::texture::Texture2d::from_id(
                 &display,
                 glium::texture::UncompressedFloatFormat::F32F32F32F32,
@@ -187,24 +183,24 @@ impl<'a> Screen<'a> {
             glium::glutin::MouseCursor::Default,
         );
 
-        // if !fontsInitialized {
+        // if !fonts_initialized {
         // setupFontCharacters()
         // }
-        // fontsInitialized = true
+        // fonts_initialized = true
 
         // glCheckError("Screen initilization.");
 
         // by default, use system fonts that are known to basically always be available
-        let mut fontFace = "".to_owned();
+        let mut font_face = "".to_owned();
         if cfg!(target_os = "windows") {
-            fontFace = "C:/Windows/Fonts/arial.ttf".to_owned();
+            font_face = "C:/Windows/Fonts/arial.ttf".to_owned();
         } else if cfg!(target_os = "linux") {
-            fontFace = "/usr/share/fonts/ttf-dejavu-ib/DejaVuSansMono.ttf".to_owned();
+            font_face = "/usr/share/fonts/ttf-dejavu-ib/DejaVuSansMono.ttf".to_owned();
         } else if cfg!(target_os = "macos") {
-            fontFace = "/Users/rje/Library/Fonts/Go-Regular.ttf".to_owned();
+            font_face = "/Users/rje/Library/Fonts/Go-Regular.ttf".to_owned();
         }
 
-        let shader_bank = init_shaders(&display, &GlslVersion)?;
+        let shader_bank = init_shaders(&display, &glsl_version)?;
 
         let vertex1 = DFBFDVertex {
             position: [-1.0, -1.0],
@@ -235,7 +231,7 @@ impl<'a> Screen<'a> {
         Ok(Screen {
             // start with default identity matrix, as expected.
             matrices: GLmatStruct {
-                currMatrix: Matrix4::new(
+                curr_matrix: Matrix4::new(
                     1.0f32,
                     0.0,
                     0.0,
@@ -253,7 +249,7 @@ impl<'a> Screen<'a> {
                     0.0,
                     1.0,
                 ),
-                matrixStack: vec![
+                matrix_stack: vec![
                     Matrix4::new(
                     1.0f32,
                     0.0,
@@ -275,50 +271,50 @@ impl<'a> Screen<'a> {
                     1
                 ],
             },
-            FBO: oh,
-            FBTexture: FBTexture,
+            fbo: oh,
+            fbtexture: fbtexture,
             fb_shape_buffer: fb_shape_buffer,
             fb_index_buffer: fb_index_buffer,
             display: ScreenType::Window(display),
             events_loop: events_loop,
             draw_params: draw_params,
-            bgCol: vec![0.8f32, 0.8, 0.8, 0.8],
-            fillStuff: true,
-            fillCol: vec![1.0f32, 1.0, 1.0, 1.0],
-            strokeStuff: true,
-            strokeCol: vec![0.0f32, 0.0, 0.0, 1.0],
-            tintStuff: false,
-            tintCol: vec![1.0f32, 1.0, 1.0, 1.0],
+            bg_col: vec![0.8f32, 0.8, 0.8, 0.8],
+            fill_stuff: true,
+            fill_col: vec![1.0f32, 1.0, 1.0, 1.0],
+            stroke_stuff: true,
+            stroke_col: vec![0.0f32, 0.0, 0.0, 1.0],
+            tint_stuff: false,
+            tint_col: vec![1.0f32, 1.0, 1.0, 1.0],
             shader_bank: shader_bank,
-            drawTexture: false,
-            aspectRatio: aspectRatio,
-            preserveAspectRatio: preserveAspectRatio,
-            fbSize: fbSize,
-            strokeWeight: 1.0,
-            fontFace: fontFace,
-            textSize: 0.4,
+            draw_texture: false,
+            aspect_ratio: aspect_ratio,
+            preserve_aspect_ratio: preserve_aspect_ratio,
+            fb_size: fb_size,
+            stroke_weight: 1.0,
+            font_face: font_face,
+            text_size: 0.4,
             height: height,
             width: width,
             left: -1f32,
             right: 1f32,
             top: 1f32,
             bottom: -1f32,
-            cMode: "RGB".to_owned(),
+            c_mode: "RGB".to_owned(),
             title: "processing-rs".to_owned(),
-            ellipseMode: "CENTER".to_owned(),
-            rectMode: "CORNER".to_owned(),
-            shapeMode: "CORNER".to_owned(),
-            imageMode: "CORNER".to_owned(),
-            frameRate: 60,
-            frameCount: 0,
-            fontsInitialized: false,
-            CurrShader: 0,
-            currCursor: glium::glutin::MouseCursor::Default,
+            ellipse_mode: "CENTER".to_owned(),
+            rect_mode: "CORNER".to_owned(),
+            shape_mode: "CORNER".to_owned(),
+            image_mode: "CORNER".to_owned(),
+            frame_rate: 60,
+            frame_count: 0,
+            fonts_initialized: false,
+            curr_shader: 0,
+            curr_cursor: glium::glutin::MouseCursor::Default,
             wrap: glium::uniforms::SamplerWrapFunction::Repeat,
-            CurrTexture: None,
-            AlternateShader: 1 << 20,
-            UsingAlternateShader: false,
-            GlslVersion: GlslVersion,
+            curr_texture: None,
+            alternate_shader: 1 << 20,
+            using_alternate_shader: false,
+            glsl_version: glsl_version,
             drew_points: false,
             keypressed: None,
             mousepressed: None,
@@ -347,13 +343,13 @@ impl<'a> Screen<'a> {
         width: u32,
         height: u32,
         //fullscreen: bool,
-        preserveAspectRatio: bool,
+        preserve_aspect_ratio: bool,
         //vsync: bool,
     ) -> Result<Screen<'a>, ProcessingErr> {
         #[cfg(target_os = "macos")] mac_priority();
 
-        let mut w = width;
-        let mut h = height;
+        let w = width;
+        let h = height;
         let events_loop = glutin::EventsLoop::new();
         let context = glutin::HeadlessRendererBuilder::new(w, h).build().map_err(|e| ProcessingErr::HeadlessRendererNoBuild(e))?;
 
@@ -364,45 +360,45 @@ impl<'a> Screen<'a> {
 
         let display = glium::HeadlessRenderer::new(context).map_err(|e| ProcessingErr::HeadlessNoCreate(e))?;
 
-        let mut GlslVersion;
+        let mut glsl_version;
         {
             let glt = display.get_context().get_opengl_version();
-            GlslVersion = format!("{}{:0<2}", glt.1, glt.2).to_owned();
-            println!("OpenGL version {}", GlslVersion);
+            glsl_version = format!("{}{:0<2}", glt.1, glt.2).to_owned();
+            println!("OpenGL version {}", glsl_version);
         }
 
-        // if frameRate == 0 {
+        // if frame_rate == 0 {
         // glfw.window_hint(glfw::WindowHint::RefreshRate(Some(60)));
-        // } else if frameRate == -1 {
+        // } else if frame_rate == -1 {
         // let system determine frame rate
         // } else {
         // glfw.window_hint(glfw::WindowHint::RefreshRate(
-        // Some(frameRate as u32),
+        // Some(frame_rate as u32),
         // ));
         // }
 
         let (w, h) = display.get_framebuffer_dimensions();
 
-        let aspectRatio = w as f32 / h as f32;
+        let aspect_ratio = w as f32 / h as f32;
 
-        let fbSize = vec![w, h];
+        let fb_size = vec![w, h];
         unsafe {
             gl::Viewport(
                 0,
                 0,
-                fbSize[0] as gl::types::GLsizei,
-                fbSize[1] as gl::types::GLsizei,
+                fb_size[0] as gl::types::GLsizei,
+                fb_size[1] as gl::types::GLsizei,
             );
         }
 
-        let FBTexture = glium::texture::Texture2d::empty_with_format(
+        let fbtexture = glium::texture::Texture2d::empty_with_format(
             &display,
             glium::texture::UncompressedFloatFormat::F32F32F32F32,
             glium::texture::MipmapsOption::NoMipmap,
             w,
             h,
         ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
-        let fbid = FBTexture.get_id();
+        let fbid = fbtexture.get_id();
         let depthtexture = glium::texture::DepthTexture2d::empty_with_format(
             &display,
             glium::texture::DepthFormat::F32,
@@ -412,7 +408,7 @@ impl<'a> Screen<'a> {
         ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
         let oh = owning_ref::OwningHandle::new_with_fn(
             Box::new(FBtexs {
-                fbtex: FBTexture,
+                fbtex: fbtexture,
                 depthtexture: depthtexture,
             }),
             |v| unsafe {
@@ -424,7 +420,7 @@ impl<'a> Screen<'a> {
                     )
             },
         );
-        let FBTexture = unsafe {
+        let fbtexture = unsafe {
             glium::texture::Texture2d::from_id(
                 &display,
                 glium::texture::UncompressedFloatFormat::F32F32F32F32,
@@ -463,24 +459,24 @@ impl<'a> Screen<'a> {
             ..Default::default()
         };
 
-        // if !fontsInitialized {
+        // if !fonts_initialized {
         // setupFontCharacters()
         // }
-        // fontsInitialized = true
+        // fonts_initialized = true
 
         // by default, use system fonts that are known to basically always be available
-        let mut fontFace = "".to_owned();
+        let mut font_face = "".to_owned();
         if cfg!(target_os = "windows") {
-            fontFace = "C:/Windows/Fonts/arial.ttf".to_owned();
+            font_face = "C:/Windows/Fonts/arial.ttf".to_owned();
         } else if cfg!(target_os = "linux") {
-            fontFace = "/usr/share/fonts/ttf-dejavu-ib/DejaVuSansMono.ttf".to_owned();
+            font_face = "/usr/share/fonts/ttf-dejavu-ib/DejaVuSansMono.ttf".to_owned();
         } else if cfg!(target_os = "macos") {
-            fontFace = "/Users/rje/Library/Fonts/Go-Regular.ttf".to_owned();
+            font_face = "/Users/rje/Library/Fonts/Go-Regular.ttf".to_owned();
         }
 
         // glCheckError("Screen initilization.");
 
-        let shader_bank = init_shaders(&display, &GlslVersion)?;
+        let shader_bank = init_shaders(&display, &glsl_version)?;
 
         let vertex1 = DFBFDVertex {
             position: [-1.0, -1.0],
@@ -511,7 +507,7 @@ impl<'a> Screen<'a> {
         Ok(Screen {
             // start with default identity matrix, as expected.
             matrices: GLmatStruct {
-                currMatrix: Matrix4::new(
+                curr_matrix: Matrix4::new(
                     1.0f32,
                     0.0,
                     0.0,
@@ -529,7 +525,7 @@ impl<'a> Screen<'a> {
                     0.0,
                     1.0,
                 ),
-                matrixStack: vec![
+                matrix_stack: vec![
                     Matrix4::new(
                     1.0f32,
                     0.0,
@@ -551,50 +547,50 @@ impl<'a> Screen<'a> {
                     1
                 ],
             },
-            FBO: oh,
-            FBTexture: FBTexture,
+            fbo: oh,
+            fbtexture: fbtexture,
             fb_shape_buffer: fb_shape_buffer,
             fb_index_buffer: fb_index_buffer,
             display: ScreenType::Headless(display),
             events_loop: events_loop,
             draw_params: draw_params,
-            bgCol: vec![0.8f32, 0.8, 0.8, 0.8],
-            fillStuff: true,
-            fillCol: vec![1.0f32, 1.0, 1.0, 1.0],
-            strokeStuff: true,
-            strokeCol: vec![0.0f32, 0.0, 0.0, 1.0],
-            tintStuff: false,
-            tintCol: vec![1.0f32, 1.0, 1.0, 1.0],
+            bg_col: vec![0.8f32, 0.8, 0.8, 0.8],
+            fill_stuff: true,
+            fill_col: vec![1.0f32, 1.0, 1.0, 1.0],
+            stroke_stuff: true,
+            stroke_col: vec![0.0f32, 0.0, 0.0, 1.0],
+            tint_stuff: false,
+            tint_col: vec![1.0f32, 1.0, 1.0, 1.0],
             shader_bank: shader_bank,
-            drawTexture: false,
-            aspectRatio: aspectRatio,
-            preserveAspectRatio: preserveAspectRatio,
-            fbSize: fbSize,
-            strokeWeight: 1.0,
-            fontFace: fontFace,
-            textSize: 0.4,
+            draw_texture: false,
+            aspect_ratio: aspect_ratio,
+            preserve_aspect_ratio: preserve_aspect_ratio,
+            fb_size: fb_size,
+            stroke_weight: 1.0,
+            font_face: font_face,
+            text_size: 0.4,
             height: height,
             width: width,
             left: -1f32,
             right: 1f32,
             top: 1f32,
             bottom: -1f32,
-            cMode: "RGB".to_owned(),
+            c_mode: "RGB".to_owned(),
             title: "processing-rs".to_owned(),
-            ellipseMode: "CENTER".to_owned(),
-            rectMode: "CORNER".to_owned(),
-            shapeMode: "CORNER".to_owned(),
-            imageMode: "CORNER".to_owned(),
-            frameRate: 60,
-            frameCount: 0,
-            fontsInitialized: false,
-            CurrShader: 0,
-            currCursor: glium::glutin::MouseCursor::Default,
+            ellipse_mode: "CENTER".to_owned(),
+            rect_mode: "CORNER".to_owned(),
+            shape_mode: "CORNER".to_owned(),
+            image_mode: "CORNER".to_owned(),
+            frame_rate: 60,
+            frame_count: 0,
+            fonts_initialized: false,
+            curr_shader: 0,
+            curr_cursor: glium::glutin::MouseCursor::Default,
             wrap: glium::uniforms::SamplerWrapFunction::Repeat,
-            CurrTexture: None,
-            AlternateShader: 1 << 20,
-            UsingAlternateShader: false,
-            GlslVersion: GlslVersion,
+            curr_texture: None,
+            alternate_shader: 1 << 20,
+            using_alternate_shader: false,
+            glsl_version: glsl_version,
             drew_points: false,
             keypressed: None,
             mousepressed: None,
@@ -617,7 +613,7 @@ impl<'a> Screen<'a> {
             ScreenType::Headless(ref d) => d.draw(),
         };
         {
-            let uniforms = uniform! { texFramebuffer: &self.FBTexture };
+            let uniforms = uniform! { texFramebuffer: &self.fbtexture };
             let p = &self.shader_bank[3];
             target
                 .draw(
@@ -676,7 +672,7 @@ impl<'a> Screen<'a> {
         self.mousereleased = mr;
         self.mousepos = mpos;
 
-        self.frameCount += 1;
+        self.frame_count += 1;
         
         Ok(())
     }
@@ -691,7 +687,7 @@ impl<'a> Screen<'a> {
             ScreenType::Headless(ref d) => d.draw(),
         };
         {
-            let uniforms = uniform! { texFramebuffer: &self.FBTexture };
+            let uniforms = uniform! { texFramebuffer: &self.fbtexture };
             let p = &self.shader_bank[3];
             target
                 .draw(
@@ -755,7 +751,7 @@ impl<'a> Screen<'a> {
         self.mousereleased = mr;
         self.mousepos = mpos;
 
-        self.frameCount += 1;
+        self.frame_count += 1;
 
         Ok(events)
     }
@@ -780,14 +776,14 @@ impl<'a> Screen<'a> {
 
 pub fn init_shaders(
     display: &glium::backend::Facade,
-    GlslVersion: &str,
+    glsl_version: &str,
 ) -> Result<Vec<glium::program::Program>, ProcessingErr> {
     let mut shader_bank = Vec::new();
 
     // basicShapes
-    let vshBS = "
+    let vsh_bs = "
     #version "
-        .to_owned() + &GlslVersion +
+        .to_owned() + &glsl_version +
         "
 
     in vec3 position;
@@ -805,9 +801,9 @@ pub fn init_shaders(
     }
     ";
 
-    let fshBS = "
+    let fsh_bs = "
     #version "
-        .to_owned() + &GlslVersion +
+        .to_owned() + &glsl_version +
         "
 
     in vec4 vColor;
@@ -823,11 +819,11 @@ pub fn init_shaders(
     let bs_program = glium::Program::new(
         display,
         glium::program::ProgramCreationInput::SourceCode {
-            vertex_shader: &vshBS,
+            vertex_shader: &vsh_bs,
             tessellation_control_shader: None,
             tessellation_evaluation_shader: None,
             geometry_shader: None,
-            fragment_shader: &fshBS,
+            fragment_shader: &fsh_bs,
             transform_feedback_varyings: None,
             outputs_srgb: true,
             uses_point_size: true,
@@ -836,9 +832,9 @@ pub fn init_shaders(
     shader_bank.push(bs_program);
 
     // texturedShapes
-    let vshTS = "
+    let vsh_ts = "
     #version "
-        .to_owned() + &GlslVersion +
+        .to_owned() + &glsl_version +
         "
 
     in vec3 position;
@@ -860,9 +856,9 @@ pub fn init_shaders(
     }
     ";
 
-    let fshTS = "
+    let fsh_ts = "
     #version "
-        .to_owned() + &GlslVersion +
+        .to_owned() + &glsl_version +
         "
 
     in vec4 vColor;
@@ -882,11 +878,11 @@ pub fn init_shaders(
     let ts_program = glium::Program::new(
         display,
         glium::program::ProgramCreationInput::SourceCode {
-            vertex_shader: &vshTS,
+            vertex_shader: &vsh_ts,
             tessellation_control_shader: None,
             tessellation_evaluation_shader: None,
             geometry_shader: None,
-            fragment_shader: &fshTS,
+            fragment_shader: &fsh_ts,
             transform_feedback_varyings: None,
             outputs_srgb: true,
             uses_point_size: true,
@@ -895,9 +891,9 @@ pub fn init_shaders(
     shader_bank.push(ts_program);
 
     // fontDrawing
-    let vshFD = "
+    let vsh_fd = "
     #version "
-        .to_owned() + &GlslVersion +
+        .to_owned() + &glsl_version +
         "
 
     in vec2 position;
@@ -916,9 +912,9 @@ pub fn init_shaders(
     }
     ";
 
-    let fshFD = "
+    let fsh_fd = "
     #version "
-        .to_owned() + &GlslVersion +
+        .to_owned() + &glsl_version +
         "
 
     in vec2 TexCoord;
@@ -941,11 +937,11 @@ pub fn init_shaders(
     let fd_program = glium::Program::new(
         display,
         glium::program::ProgramCreationInput::SourceCode {
-            vertex_shader: &vshFD,
+            vertex_shader: &vsh_fd,
             tessellation_control_shader: None,
             tessellation_evaluation_shader: None,
             geometry_shader: None,
-            fragment_shader: &fshFD,
+            fragment_shader: &fsh_fd,
             transform_feedback_varyings: None,
             outputs_srgb: true,
             uses_point_size: true,
@@ -986,9 +982,9 @@ pub fn init_shaders(
     // }
 
     // framebuffer
-    let vshDFB = "
+    let vsh_dfb = "
     #version "
-        .to_owned() + &GlslVersion +
+        .to_owned() + &glsl_version +
         "
 
     in vec2 position;
@@ -1004,9 +1000,9 @@ pub fn init_shaders(
     }
     ";
 
-    let fshDFB = "
+    let fsh_dfb = "
     #version "
-        .to_owned() + &GlslVersion +
+        .to_owned() + &glsl_version +
         "
 
     in vec2 Texcoord;
@@ -1025,11 +1021,11 @@ pub fn init_shaders(
     let dfb_program = glium::Program::new(
         display,
         glium::program::ProgramCreationInput::SourceCode {
-            vertex_shader: &vshDFB,
+            vertex_shader: &vsh_dfb,
             tessellation_control_shader: None,
             tessellation_evaluation_shader: None,
             geometry_shader: None,
-            fragment_shader: &fshDFB,
+            fragment_shader: &fsh_dfb,
             transform_feedback_varyings: None,
             outputs_srgb: true,
             uses_point_size: true,

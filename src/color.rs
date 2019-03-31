@@ -1,9 +1,6 @@
-use glium;
 use glium::Surface;
 
 use Screen;
-
-use shapes::ShapeVertex;
 
 impl<'a> Screen<'a> {
 	/// Change the background color of the window. It takes four f32's. If color mode
@@ -13,7 +10,7 @@ impl<'a> Screen<'a> {
 	/// for alpha.
     #[inline]
     pub fn background(&mut self, r: f32, g: f32, b: f32, a: f32) {
-        let framebuffer = &mut self.FBO;
+        let framebuffer = &mut self.fbo;
         framebuffer.clear_color_srgb(r, g, b, a);
     }
 
@@ -21,8 +18,8 @@ impl<'a> Screen<'a> {
 	/// stroke(), background(), and color() to be reinterpreted in the respective 
 	/// color system.
     #[inline]
-    pub fn colorMode(&mut self, mode: &str) {
-        self.cMode = mode.to_owned();
+    pub fn color_mode(&mut self, mode: &str) {
+        self.c_mode = mode.to_owned();
     }
 
 	/// Change the color used to fill in the space bounded by shapes. For example,
@@ -33,17 +30,17 @@ impl<'a> Screen<'a> {
 	/// function will also undo the effect of fill_off().
     #[inline]
     pub fn fill(&mut self, r: &[f32], g: &[f32], b: &[f32], a: &[f32]) {
-        if self.fillStuff == false {
-            self.fillStuff = true;
+        if self.fill_stuff == false {
+            self.fill_stuff = true;
         }
-        if self.cMode == "RGB" {
-            self.fillCol = vec![];
+        if self.c_mode == "RGB" {
+            self.fill_col = vec![];
             for x in 0..r.len() {
-                // self.fillCol.push(RGB(r[x], g[x], b[x]);
-                self.fillCol.push(r[x]);
-                self.fillCol.push(g[x]);
-                self.fillCol.push(b[x]);
-                self.fillCol.push(a[x]);
+                // self.fill_col.push(RGB(r[x], g[x], b[x]);
+                self.fill_col.push(r[x]);
+                self.fill_col.push(g[x]);
+                self.fill_col.push(b[x]);
+                self.fill_col.push(a[x]);
             }
         } else {
         }
@@ -54,7 +51,7 @@ impl<'a> Screen<'a> {
 	/// or fill_on() will re-enable filling in of shapes.
     #[inline]
     pub fn fill_off(&mut self) {
-        self.fillStuff = false;
+        self.fill_stuff = false;
     }
 
 	/// This disables the drawing of edges of shapes, such that only their interior is
@@ -64,21 +61,21 @@ impl<'a> Screen<'a> {
 	/// the drawing of edges of shapes.
     #[inline]
     pub fn stroke_off(&mut self) {
-        self.strokeStuff = false;
+        self.stroke_stuff = false;
     }
 
 	/// This undoes the effect of fill_off(), so that the interiors of shapes are drawn
 	/// again.
     #[inline]
     pub fn fill_on(&mut self) {
-        self.fillStuff = true;
+        self.fill_stuff = true;
     }
 	
 	/// This undoes the effect of stroke_off(), so that the edges of shapes are drawn
 	/// again.
     #[inline]
     pub fn stroke_on(&mut self) {
-        self.strokeStuff = true;
+        self.stroke_stuff = true;
     }
 	
 	/// Change the color used to drawn the edges of shapes. For example,
@@ -89,17 +86,17 @@ impl<'a> Screen<'a> {
 	/// function will also undo the effect of stroke_off().
     #[inline]
     pub fn stroke(&mut self, r: &[f32], g: &[f32], b: &[f32], a: &[f32]) {
-        if self.strokeStuff == false {
-            self.strokeStuff = true;
+        if self.stroke_stuff == false {
+            self.stroke_stuff = true;
         }
-        if self.cMode == "RGB" {
-            self.strokeCol = vec![];
+        if self.c_mode == "RGB" {
+            self.stroke_col = vec![];
             for x in 0..r.len() {
-                // self.strokeCol.push(RGB(r[x], g[x], b[x]);
-                self.strokeCol.push(r[x]);
-                self.strokeCol.push(g[x]);
-                self.strokeCol.push(b[x]);
-                self.strokeCol.push(a[x]);
+                // self.stroke_col.push(RGB(r[x], g[x], b[x]);
+                self.stroke_col.push(r[x]);
+                self.stroke_col.push(g[x]);
+                self.stroke_col.push(b[x]);
+                self.stroke_col.push(a[x]);
             }
         } else {
         }

@@ -157,7 +157,7 @@ impl<'a> Screen<'a> {
 	/// When you sample outside the boundaries of a texture, should it wrap around and
 	/// repeat ("REPEAT", the default) or should it clamp ("CLAMP") at the edge. See
 	/// the official Processing reference for more info and examples.
-    pub fn textureWrap(&mut self, wrap: &str) {
+    pub fn texture_wrap(&mut self, wrap: &str) {
         if wrap == "CLAMP" {
             self.wrap = glium::uniforms::SamplerWrapFunction::Clamp;
         } else if wrap == "REPEAT" {

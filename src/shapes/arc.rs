@@ -58,57 +58,57 @@ impl Arc {
     ) -> Result<Self, ProcessingErr> {
         let mut xc = xci.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut yc = yci.iter().map(|&v| v).collect::<Vec<f64>>();
-        let mut zc = zci.iter().map(|&v| v).collect::<Vec<f64>>();
+        let zc = zci.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut w = wi.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut h = hi.iter().map(|&v| v).collect::<Vec<f64>>();
         let start = starti.iter().map(|&v| v).collect::<Vec<f64>>();
         let stop = stopi.iter().map(|&v| v).collect::<Vec<f64>>();
-        if screen.preserveAspectRatio && screen.aspectRatio != 1f32 {
-            if screen.aspectRatio > 1f32 {
+        if screen.preserve_aspect_ratio && screen.aspect_ratio != 1f32 {
+            if screen.aspect_ratio > 1f32 {
                 for i in 0..w.len() {
-                    xc[i] = xc[i] / screen.aspectRatio as f64;
-                    w[i] = w[i] / screen.aspectRatio as f64;
+                    xc[i] = xc[i] / screen.aspect_ratio as f64;
+                    w[i] = w[i] / screen.aspect_ratio as f64;
                 }
             } else {
                 for i in 0..w.len() {
-                    yc[i] = yc[i] * screen.aspectRatio as f64;
-                    h[i] = h[i] * screen.aspectRatio as f64;
+                    yc[i] = yc[i] * screen.aspect_ratio as f64;
+                    h[i] = h[i] * screen.aspect_ratio as f64;
                 }
             }
         }
 
-        if screen.ellipseMode == "CENTER" {
+        if screen.ellipse_mode == "CENTER" {
             for i in 0..w.len() {
                 w[i] = w[i] / 2.0;
                 h[i] = h[i] / 2.0;
             }
-        } else if screen.ellipseMode == "CORNER" {
+        } else if screen.ellipse_mode == "CORNER" {
             //  w = w ./ 2
             //  h = h ./ 2
             //  xc = xc .+ w
             //  yc = yc .+ h
-        } else if screen.ellipseMode == "CORNERS" {
+        } else if screen.ellipse_mode == "CORNERS" {
             //  xc = (w .- xc)./2
             //  yc = (h .- yc)./2
             //  w = w ./ 2
             //  h = h ./ 2
         }
 
-        let numSlices = 200.0 + 2.0;
+        let num_slices = 200.0 + 2.0;
         let mut cs: Vec<Vec<f64>> = Vec::with_capacity(xc.len());
         let mut ss: Vec<Vec<f64>> = Vec::with_capacity(xc.len());
         for j in 0..xc.len() {
-            cs.push(Vec::with_capacity(numSlices as usize - 1));
-            ss.push(Vec::with_capacity(numSlices as usize - 1));
-            let step = 1.0 / (numSlices - 1.0);
+            cs.push(Vec::with_capacity(num_slices as usize - 1));
+            ss.push(Vec::with_capacity(num_slices as usize - 1));
+            let step = 1.0 / (num_slices - 1.0);
             let end = stop[j];
             let diff = end - start[j];
-            for i in 0..numSlices as usize {
+            for i in 0..num_slices as usize {
                 let p = start[j] + diff * i as f64 * step;
                 cs[j].push(p.cos());
                 ss[j].push(p.sin());
             }
-            let p = start[j] + diff * (numSlices - 1.) * step;
+            let p = start[j] + diff * (num_slices - 1.) * step;
             cs[j].push(p.cos());
             ss[j].push(p.sin());
         }
@@ -116,16 +116,17 @@ impl Arc {
         let eps = f32::EPSILON;
         let mut shape = vec![];
         for (i, _) in xc.iter().enumerate() {
-            for j in 0..numSlices as usize {
+            for j in 0..num_slices as usize {
                 let vertex = if j == 0 {
                     ShapeVertex {
                         position: [
                             xc[i] as f32,
                             yc[i] as f32,
-                            // if z1[c] == 0.0 {
-                            eps * i as f32 // } else {
-                                           // z1[c] as f32
-                                           // },
+                            if zc[i] == 0.0 {
+                                eps * i as f32
+                            } else {
+                                zc[i] as f32
+                            },
                         ],
                         color: [0.0, 0.0, 0.0, 0.0],
                         texcoord: [0f32, 0.],
@@ -135,10 +136,11 @@ impl Arc {
                         position: [
                             (cs[i][j - 1] * w[i] + xc[i]) as f32,
                             (ss[i][j - 1] * h[i] + yc[i]) as f32,
-                            // if z1[c] == 0.0 {
-                            eps * i as f32 // } else {
-                                           // z1[c] as f32
-                                           // },
+                            if zc[i] == 0.0 {
+                                eps * i as f32
+                            } else {
+                                zc[i] as f32
+                            },
                         ],
                         color: [0.0, 0.0, 0.0, 0.0],
                         texcoord: [0f32, 0.],
@@ -148,7 +150,7 @@ impl Arc {
             }
         }
 
-        load_colors(&mut shape, &screen.fillCol);
+        load_colors(&mut shape, &screen.fill_col);
         let fill_shape_buffer = match screen.display {
             ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
                 	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
@@ -156,7 +158,7 @@ impl Arc {
                 	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
         };
 
-        load_colors(&mut shape, &screen.strokeCol);
+        load_colors(&mut shape, &screen.stroke_col);
         let stroke_shape_buffer = match screen.display {
             ScreenType::Window(ref d) => {
                 glium::VertexBuffer::new(d, &shape[1..shape.len() - 1])

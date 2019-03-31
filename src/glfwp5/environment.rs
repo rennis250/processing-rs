@@ -10,10 +10,10 @@ impl<'a> Screen<'a> {
 	/// This is operating system dependent, but is usually an arrow.
     #[inline]
     pub fn reset_cursor(&mut self) {
-        self.currCursor = glfw::StandardCursor::Arrow;
+        self.curr_cursor = glfw::StandardCursor::Arrow;
         match self.display {
             ScreenType::Window(ref d) => {
-                (*d).gl_window_mut().set_cursor(Some(glfw::Cursor::standard(self.currCursor)));
+                (*d).gl_window_mut().set_cursor(Some(glfw::Cursor::standard(self.curr_cursor)));
             }
             _ => (),
         };
@@ -23,29 +23,29 @@ impl<'a> Screen<'a> {
 	/// and "WAIT", all following the convention of Processing. These will probably be
 	/// changed to enums in the future.
     #[inline]
-    pub fn cursor(&mut self, cursorType: &str) {
+    pub fn cursor(&mut self, cursor_type: &str) {
         match self.display {
             ScreenType::Window(ref d) => {
                 (*d).gl_window_mut().set_cursor_mode(glfw::CursorMode::Normal);
             }
             _ => ()
         }
-        if cursorType == "HAND" {
-            self.currCursor = glfw::StandardCursor::Hand;
-        } else if cursorType == "ARROW" {
-            self.currCursor = glfw::StandardCursor::Arrow;
-        } else if cursorType == "CROSS" {
-            self.currCursor = glfw::StandardCursor::Crosshair;
-        } else if cursorType == "MOVE" {
-            self.currCursor = glfw::StandardCursor::Crosshair;
-        } else if cursorType == "TEXT" {
-            self.currCursor = glfw::StandardCursor::IBeam;
-        } else if cursorType == "WAIT" {
-            // self.currCursor = glfw::StandardCursor::Wait;
+        if cursor_type == "HAND" {
+            self.curr_cursor = glfw::StandardCursor::Hand;
+        } else if cursor_type == "ARROW" {
+            self.curr_cursor = glfw::StandardCursor::Arrow;
+        } else if cursor_type == "CROSS" {
+            self.curr_cursor = glfw::StandardCursor::Crosshair;
+        } else if cursor_type == "MOVE" {
+            self.curr_cursor = glfw::StandardCursor::Crosshair;
+        } else if cursor_type == "TEXT" {
+            self.curr_cursor = glfw::StandardCursor::IBeam;
+        } else if cursor_type == "WAIT" {
+            // self.curr_cursor = glfw::StandardCursor::Wait;
         }
         match self.display {
             ScreenType::Window(ref d) => {
-                (*d).gl_window_mut().set_cursor(Some(glfw::Cursor::standard(self.currCursor)));
+                (*d).gl_window_mut().set_cursor(Some(glfw::Cursor::standard(self.curr_cursor)));
             }
             _ => ()
         };
@@ -70,20 +70,20 @@ impl<'a> Screen<'a> {
 
 	/// How many frames have already been revealed.
     #[inline]
-    pub fn frameCount(&self) -> isize {
-        self.frameCount
+    pub fn frame_count(&self) -> isize {
+        self.frame_count
     }
 
 	/// What is the current framerate of the screen.
     #[inline]
-    pub fn get_frameRate(&self) -> isize {
-        self.frameRate
+    pub fn get_frame_rate(&self) -> isize {
+        self.frame_rate
     }
 
 	/// Change the framerate of the screen.
     #[inline]
-    pub fn set_frameRate(&mut self, fRate: isize) {
-        self.frameRate = fRate;
+    pub fn set_frame_rate(&mut self, f_rate: isize) {
+        self.frame_rate = f_rate;
     }
 
 	/// What is the height of the screen.
@@ -94,7 +94,7 @@ impl<'a> Screen<'a> {
 
 	/// Disable the cursor so that it cannot be seen.
     #[inline]
-    pub fn noCursor(&mut self) {
+    pub fn no_cursor(&mut self) {
         match self.display {
             ScreenType::Window(ref d) => {
                 (*d).gl_window_mut().set_cursor_mode(glfw::CursorMode::Hidden)
@@ -106,7 +106,7 @@ impl<'a> Screen<'a> {
 	/// Draw shapes without antialiasing, so that individual pixels can be more readily
 	/// observed.
     #[inline]
-    pub fn noSmooth(&mut self) {
+    pub fn no_smooth(&mut self) {
         self.draw_params = glium::draw_parameters::DrawParameters {
             smooth: None,
             ..self.draw_params.clone()

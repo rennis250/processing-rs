@@ -2,7 +2,7 @@
 
 use glfw;
 
-use {Screen, Key, MouseButton};
+use Screen;
 
 impl<'a> Screen<'a> {
 	/// Check if the given key was pressed since the last call to screen.release()
@@ -25,11 +25,11 @@ impl<'a> Screen<'a> {
 
 	/// Pause the program and wait for the space bar to be pressed. This is a
 	/// convienence which is useful for debugging and also in psychological experiments.
-    pub fn SpaceWait(&mut self) {
+    pub fn space_wait(&mut self) {
         self.glfw.wait_events();
         for (_, event) in glfw::flush_messages(&self.events_loop) {
             match event {
-                glfw::WindowEvent::Key(key, scancode, action, mods) => {
+                glfw::WindowEvent::Key(key, _, action, _) => {
                     match (key, action) {
                         (glfw::Key::Space, glfw::Action::Press) => break,
                         _ => (),
@@ -42,7 +42,7 @@ impl<'a> Screen<'a> {
 
 	/// Check if the given mouse button was pressed since the last call to
 	/// screen.reveal() or screen.poll_events().
-    pub fn MousePress<B: Into<glfw::MouseButton>>(&mut self, button: B) -> bool {
+    pub fn mouse_press<B: Into<glfw::MouseButton>>(&mut self, button: B) -> bool {
         match self.mousepressed {
             Some(b) => {
                 let btn: glfw::MouseButton = button.into();
@@ -60,7 +60,7 @@ impl<'a> Screen<'a> {
 
 	/// Check if the given mouse button was released since the last call to
 	/// screen.reveal() or screen.poll_events().
-    pub fn MouseRelease<B: Into<glfw::MouseButton>>(&mut self, button: B) -> bool {
+    pub fn mouse_release<B: Into<glfw::MouseButton>>(&mut self, button: B) -> bool {
         match self.mousereleased {
             Some(b) => {
                 let btn: glfw::MouseButton = button.into();
@@ -78,13 +78,13 @@ impl<'a> Screen<'a> {
 
 	/// What was the x-coordinate of the mouse at the last call to screen.reveal()
 	/// or screen.poll_events().
-    pub fn MouseX(&mut self) -> f64 {
+    pub fn mouse_x(&mut self) -> f64 {
         self.mousepos.0
     }
 
 	/// What was the y-coordinate of the mouse at the last call to screen.reveal()
 	/// or screen.poll_events().
-    pub fn MouseY(&mut self) -> f64 {
+    pub fn mouse_y(&mut self) -> f64 {
         self.mousepos.1
     }
 }

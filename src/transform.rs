@@ -5,7 +5,7 @@ use {Matrix4, Vector3, Unit};
 impl<'a> Screen<'a> {
 	/// Pre-multiply the current MVP transformation matrix with a matrix formed
 	/// from the given values.
-    pub fn applyMatrix(
+    pub fn apply_matrix(
         &mut self,
         n00: f32,
         n01: f32,
@@ -43,16 +43,16 @@ impl<'a> Screen<'a> {
             n33,
         );
 
-        self.matrices.currMatrix = m * self.matrices.currMatrix;
+        self.matrices.curr_matrix = m * self.matrices.curr_matrix;
     }
 
 	/// Remove the current MVP transformation matrix from the stack and use the most
 	/// recently used one instead.
-    pub fn popMatrix(&mut self) {
-        match self.matrices.matrixStack.pop() {
-            Some(m) => self.matrices.currMatrix = m,
+    pub fn pop_matrix(&mut self) {
+        match self.matrices.matrix_stack.pop() {
+            Some(m) => self.matrices.curr_matrix = m,
             None => {
-                self.matrices.currMatrix = Matrix4::identity();
+                self.matrices.curr_matrix = Matrix4::identity();
             }
         };
     }
@@ -61,14 +61,14 @@ impl<'a> Screen<'a> {
 	/// saved for later. Useful for when you want to temporarily apply some rotation
 	/// or translation to a single object and don't want to disturb the rest of the
 	/// scene.
-    pub fn pushMatrix(&mut self) {
-        self.matrices.matrixStack.push(self.matrices.currMatrix);
+    pub fn push_matrix(&mut self) {
+        self.matrices.matrix_stack.push(self.matrices.curr_matrix);
     }
 
 	/// Remove the current MVP transfomation matrix and set it to the standard 4x4
 	/// identity matrix.
-    pub fn resetMatrix(&mut self) {
-        self.matrices.currMatrix = Matrix4::identity();
+    pub fn reset_matrix(&mut self) {
+        self.matrices.curr_matrix = Matrix4::identity();
     }
 
 	/// Pre-multiply the current MVP transformation matrix by a rotation matrix which
@@ -94,28 +94,28 @@ impl<'a> Screen<'a> {
         // );
         let m = Matrix4::from_axis_angle(&Unit::new_unchecked(Vector3::new(x, y, z)), angle);
 
-        self.matrices.currMatrix = m * self.matrices.currMatrix;
+        self.matrices.curr_matrix = m * self.matrices.curr_matrix;
     }
 
 	/// Apply a rotation matrix for a given angle around the x-axis to the current MVP
 	/// transformation matrix.
-    pub fn rotateX(&mut self, angle: f32) {
+    pub fn rotate_x(&mut self, angle: f32) {
         let m = Matrix4::from_axis_angle(&Unit::new_unchecked(Vector3::new(1., 0., 0.)), angle);
-        self.matrices.currMatrix = m * self.matrices.currMatrix;
+        self.matrices.curr_matrix = m * self.matrices.curr_matrix;
     }
 
 	/// Apply a rotation matrix for a given angle around the y-axis to the current MVP
 	/// transformation matrix.
-    pub fn rotateY(&mut self, angle: f32) {
+    pub fn rotate_y(&mut self, angle: f32) {
         let m = Matrix4::from_axis_angle(&Unit::new_unchecked(Vector3::new(0., 1., 0.)), angle);
-        self.matrices.currMatrix = m * self.matrices.currMatrix;
+        self.matrices.curr_matrix = m * self.matrices.curr_matrix;
     }
 
 	/// Apply a rotation matrix for a given angle around the z-axis to the current MVP
 	/// transformation matrix.
-    pub fn rotateZ(&mut self, angle: f32) {
+    pub fn rotate_z(&mut self, angle: f32) {
         let m = Matrix4::from_axis_angle(&Unit::new_unchecked(Vector3::new(0., 0., 1.)), angle);
-        self.matrices.currMatrix = m * self.matrices.currMatrix;
+        self.matrices.curr_matrix = m * self.matrices.curr_matrix;
     }
 
 	/// Scale the scene along the x-, y-, and z-axes by applying a matrix derived from
@@ -123,14 +123,14 @@ impl<'a> Screen<'a> {
     pub fn scale(&mut self, x: f32, y: f32, z: f32) {
         // let m = Matrix4::new(x, 0., 0., 0., 0., y, 0., 0., 0., 0., z, 0., 0., 0., 0., 1.);
 
-        self.matrices.currMatrix.append_nonuniform_scaling(
+        self.matrices.curr_matrix.append_nonuniform_scaling(
             &Vector3::new(x, y, z),
-        ); //* self.matrices.currMatrix;
+        ); //* self.matrices.curr_matrix;
     }
 
 	/// Derive a matrix that applies shear for a given angle the scene about the x-axis
 	/// and apply it to the current MVP transformation matrix.
-    pub fn shearX(&mut self, angle: f32) {
+    pub fn shear_x(&mut self, angle: f32) {
         let m = Matrix4::new(
             1.,
             angle.tan(),
@@ -150,12 +150,12 @@ impl<'a> Screen<'a> {
             1.,
         );
 
-        self.matrices.currMatrix = m * self.matrices.currMatrix;
+        self.matrices.curr_matrix = m * self.matrices.curr_matrix;
     }
 
 	/// Derive a matrix that applies shear for a given angle the scene about the y-axis
 	/// and apply it to the current MVP transformation matrix.
-    pub fn shearY(&mut self, angle: f32) {
+    pub fn shear_y(&mut self, angle: f32) {
         let m = Matrix4::new(
             1.,
             0.,
@@ -175,7 +175,7 @@ impl<'a> Screen<'a> {
             1.,
         );
 
-        self.matrices.currMatrix = m * self.matrices.currMatrix;
+        self.matrices.curr_matrix = m * self.matrices.curr_matrix;
     }
 
 	/// Derive a translation matrix from the given (x, y, z) vector and apply it to the
@@ -183,11 +183,11 @@ impl<'a> Screen<'a> {
     pub fn translate(&mut self, x: f32, y: f32, z: f32) {
         let m = Matrix4::new(1., 0., 0., x, 0., 1., 0., y, 0., 0., 1., z, 0., 0., 0., 1.);
 
-        self.matrices.currMatrix = m * self.matrices.currMatrix;
+        self.matrices.curr_matrix = m * self.matrices.curr_matrix;
     }
 
 	/// Print out the current MVP transformation matrix.
-    pub fn printMatrix(&self) {
-        println!("{:?}", self.matrices.currMatrix);
+    pub fn print_matrix(&self) {
+        println!("{:?}", self.matrices.curr_matrix);
     }
 }

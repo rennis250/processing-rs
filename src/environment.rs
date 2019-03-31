@@ -2,17 +2,18 @@ use glium;
 use glium::glutin;
 
 use {Screen, ScreenType};
+use errors::ProcessingErr;
 
 impl<'a> Screen<'a> {
 	/// Change the cursor back to the default that is used when a new Screen is made.
 	/// This is operating system dependent, but is usually an arrow.
     #[inline]
-    pub fn reset_cursor(&mut self) {
+    pub fn reset_cursor(&mut self) -> Result<(), ProcessingErr> {
         match self.display {
-            ScreenType::Window(ref d) => { (*d).gl_window().set_cursor_state(glutin::CursorState::Normal); },
+            ScreenType::Window(ref d) => (*d).gl_window().set_cursor_state(glutin::CursorState::Normal).map_err(|e| ProcessingErr::CursorStateNotSet(e))?,
             _ => (),
         };
-        self.currCursor = glium::glutin::MouseCursor::Default;
+        self.curr_cursor = glium::glutin::MouseCursor::Default;
         match self.display {
             ScreenType::Window(ref d) => {
                 (*d).gl_window().set_cursor(
@@ -21,34 +22,38 @@ impl<'a> Screen<'a> {
             }
             _ => (),
         };
+        
+        Ok(())
     }
 
 	/// Change the cursor. Possible types are "HAND", "ARROW", "CROSS", "MOVE", "TEXT",
 	/// and "WAIT", all following the convention of Processing. These will probably be
 	/// changed to enums in the future.
     #[inline]
-    pub fn cursor(&mut self, cursorType: &str) {
+    pub fn cursor(&mut self, cursor_type: &str) -> Result<(), ProcessingErr> {
         match self.display {
-            ScreenType::Window(ref d) => { (*d).gl_window().set_cursor_state(glutin::CursorState::Normal); },
+            ScreenType::Window(ref d) => (*d).gl_window().set_cursor_state(glutin::CursorState::Normal).map_err(|e| ProcessingErr::CursorStateNotSet(e))?,
             _ => (),
         };
-        if cursorType == "HAND" {
-            self.currCursor = glium::glutin::MouseCursor::Hand;
-        } else if cursorType == "ARROW" {
-            self.currCursor = glium::glutin::MouseCursor::Arrow;
-        } else if cursorType == "CROSS" {
-            self.currCursor = glium::glutin::MouseCursor::Crosshair;
-        } else if cursorType == "MOVE" {
-            self.currCursor = glium::glutin::MouseCursor::Move;
-        } else if cursorType == "TEXT" {
-            self.currCursor = glium::glutin::MouseCursor::Text;
-        } else if cursorType == "WAIT" {
-            self.currCursor = glium::glutin::MouseCursor::Wait;
+        if cursor_type == "HAND" {
+            self.curr_cursor = glium::glutin::MouseCursor::Hand;
+        } else if cursor_type == "ARROW" {
+            self.curr_cursor = glium::glutin::MouseCursor::Arrow;
+        } else if cursor_type == "CROSS" {
+            self.curr_cursor = glium::glutin::MouseCursor::Crosshair;
+        } else if cursor_type == "MOVE" {
+            self.curr_cursor = glium::glutin::MouseCursor::Move;
+        } else if cursor_type == "TEXT" {
+            self.curr_cursor = glium::glutin::MouseCursor::Text;
+        } else if cursor_type == "WAIT" {
+            self.curr_cursor = glium::glutin::MouseCursor::Wait;
         }
         match self.display {
-            ScreenType::Window(ref d) => (*d).gl_window().set_cursor(self.currCursor),
+            ScreenType::Window(ref d) => (*d).gl_window().set_cursor(self.curr_cursor),
             _ => (),
         };
+        
+        Ok(())
     }
 
 	/// Test if this screen is the currently focused screen.
@@ -58,7 +63,7 @@ impl<'a> Screen<'a> {
         self.events_loop.poll_events(|event| match event {
             glutin::Event::WindowEvent { event, .. } => {
                 match event {
-                    glutin::WindowEvent::Focused(b) => {
+                    glutin::WindowEvent::Focused(_) => {
                         focused = true;
                     }
                     _ => (),
@@ -72,20 +77,20 @@ impl<'a> Screen<'a> {
 
 	/// How many frames have already been revealed.
     #[inline]
-    pub fn frameCount(&self) -> isize {
-        self.frameCount
+    pub fn frame_count(&self) -> isize {
+        self.frame_count
     }
 
 	/// What is the current framerate of the screen.
     #[inline]
-    pub fn get_frameRate(&self) -> isize {
-        self.frameRate
+    pub fn get_frame_rate(&self) -> isize {
+        self.frame_rate
     }
 
 	/// Change the framerate of the screen.
     #[inline]
-    pub fn set_frameRate(&mut self, fRate: isize) {
-        self.frameRate = fRate;
+    pub fn set_frame_rate(&mut self, f_rate: isize) {
+        self.frame_rate = f_rate;
     }
 
 	/// What is the height of the screen.
@@ -96,18 +101,19 @@ impl<'a> Screen<'a> {
 
 	/// Disable the cursor so that it cannot be seen.
     #[inline]
-    pub fn noCursor(&mut self) {
+    pub fn no_cursor(&mut self) -> Result<(), ProcessingErr> {
         match self.display {
-            ScreenType::Window(ref d) => { (*d).gl_window().set_cursor_state(glutin::CursorState::Hide); },
+            ScreenType::Window(ref d) => (*d).gl_window().set_cursor_state(glutin::CursorState::Hide).map_err(|e| ProcessingErr::CursorStateNotSet(e))?,
             _ => (),
         };
-        // GLFW.SetInputMode(self, GLFW.CURSOR, GLFW.CURSOR_HIDDEN);
+        
+        Ok(())
     }
 
 	/// Draw shapes without antialiasing, so that individual pixels can be more readily
 	/// observed.
     #[inline]
-    pub fn noSmooth(&mut self) {
+    pub fn no_smooth(&mut self) {
         self.draw_params = glium::draw_parameters::DrawParameters {
             smooth: None,
             ..self.draw_params.clone()

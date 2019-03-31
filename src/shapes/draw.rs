@@ -1,4 +1,3 @@
-use glium;
 use glium::Surface;
 use glium::uniforms::Uniforms;
 
@@ -14,11 +13,11 @@ impl<'a> Screen<'a> {
 	/// many shapes should be faster than in a standard Processing environment.
     #[inline]
     pub fn draw<S: Shape>(&mut self, shape: &S) -> Result<(), ProcessingErr> {
-        let framebuffer = &mut self.FBO;
+        let framebuffer = &mut self.fbo;
         if let Some(tex) = shape.get_texture() {
             let prog = &self.shader_bank[1];
             let u = create_uniforms!{self, tex: *tex};
-            if self.fillStuff {
+            if self.fill_stuff {
                 match *shape.fill_indices() {
                     &IndexType::Buffer { ind: ref ib } => {
                         framebuffer
@@ -32,7 +31,7 @@ impl<'a> Screen<'a> {
                     }
                 }
             };
-            if self.strokeStuff {
+            if self.stroke_stuff {
                 match *shape.stroke_indices() {
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
@@ -45,7 +44,7 @@ impl<'a> Screen<'a> {
         } else {
             let prog = &self.shader_bank[0];
             let u = create_uniforms!{self};
-            if self.fillStuff {
+            if self.fill_stuff {
                 match *shape.fill_indices() {
                     &IndexType::Buffer { ind: ref ib } => {
                         framebuffer
@@ -59,7 +58,7 @@ impl<'a> Screen<'a> {
                     }
                 }
             };
-            if self.strokeStuff {
+            if self.stroke_stuff {
                 match *shape.stroke_indices() {
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
@@ -90,8 +89,8 @@ impl<'a> Screen<'a> {
         let shape = mould.get_shape();
         let prog = &self.shader_bank[shader.get_idx()];
         let uniforms = shader.get_uniforms();
-        let framebuffer = &mut self.FBO;
-        if self.fillStuff {
+        let framebuffer = &mut self.fbo;
+        if self.fill_stuff {
             match *shape.fill_indices() {
                 &IndexType::Buffer { ind: ref ib } => {
                     framebuffer
@@ -105,7 +104,7 @@ impl<'a> Screen<'a> {
                 }
             }
         };
-        if self.strokeStuff {
+        if self.stroke_stuff {
             match *shape.stroke_indices() {
                 &IndexType::NoBuffer { ind: ref ib } => {
                     framebuffer
@@ -133,7 +132,7 @@ impl<'a> Screen<'a> {
     //     if let Some(tex) = shape.get_texture() {
     //         let prog = &self.shader_bank[1];
     //         let u = create_uniforms!{self, tex: *tex};
-    //         if self.fillStuff {
+    //         if self.fill_stuff {
     //             match *shape.fill_indices() {
     //                 &IndexType::Buffer { ind: ref ib } => {
     //                     framebuffer.draw(*shape.fill_buffer(), ib, prog, &u, &t)
@@ -145,7 +144,7 @@ impl<'a> Screen<'a> {
     //                 }
     //             }
     //         }
-    //         if self.strokeStuff {
+    //         if self.stroke_stuff {
     //             match *shape.stroke_indices() {
     //                 &IndexType::NoBuffer { ind: ref ib } => {
     //                     framebuffer.draw(*shape.stroke_buffer(), ib, prog, &u, &t)
@@ -157,7 +156,7 @@ impl<'a> Screen<'a> {
     //     } else {
     //         let prog = &self.shader_bank[0];
     //         let u = create_uniforms!{self};
-    //         if self.fillStuff {
+    //         if self.fill_stuff {
     //             match *shape.fill_indices() {
     //                 &IndexType::Buffer { ind: ref ib } => {
     //                     framebuffer.draw(*shape.fill_buffer(), ib, prog, &u, &t)
@@ -169,7 +168,7 @@ impl<'a> Screen<'a> {
     //                 }
     //             }
     //         }
-    //         if self.strokeStuff {
+    //         if self.stroke_stuff {
     //             match *shape.stroke_indices() {
     //                 &IndexType::NoBuffer { ind: ref ib } => {
     //                     framebuffer.draw(*shape.stroke_buffer(), ib, prog, &u, &t)
@@ -197,7 +196,7 @@ impl<'a> Screen<'a> {
     //     let mut framebuffer = tex.as_surface();
     //     let mut t = self.draw_params.clone();
     //     t.depth.write = false;
-    //     if self.fillStuff {
+    //     if self.fill_stuff {
     //         match *shape.fill_indices() {
     //             &IndexType::Buffer { ind: ref ib } => {
     //                 framebuffer.draw(*shape.fill_buffer(), ib, prog, uniforms, &t)
@@ -209,7 +208,7 @@ impl<'a> Screen<'a> {
     //             }
     //         }
     //     }
-    //     if self.strokeStuff {
+    //     if self.stroke_stuff {
     //         match *shape.stroke_indices() {
     //             &IndexType::NoBuffer { ind: ref ib } => {
     //                 framebuffer.draw(*shape.stroke_buffer(), ib, &prog, uniforms, &t)
@@ -220,20 +219,20 @@ impl<'a> Screen<'a> {
     //     }
     // }
 
-    pub fn stroke_weight(&mut self, newWeight: f32) {
-        self.draw_params.point_size = Some(newWeight);
-        self.draw_params.line_width = Some(newWeight);
+    pub fn stroke_weight(&mut self, new_weight: f32) {
+        self.draw_params.point_size = Some(new_weight);
+        self.draw_params.line_width = Some(new_weight);
     }
 
     pub fn ellipse_mode(&mut self, mode: &str) {
-        self.ellipseMode = mode.to_owned();
+        self.ellipse_mode = mode.to_owned();
     }
 
     pub fn rect_mode(&mut self, mode: &str) {
-        self.rectMode = mode.to_owned();
+        self.rect_mode = mode.to_owned();
     }
 
     pub fn shape_mode(&mut self, mode: &str) {
-        self.shapeMode = mode.to_owned();
+        self.shape_mode = mode.to_owned();
     }
 }

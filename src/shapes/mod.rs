@@ -40,22 +40,22 @@ pub trait Shape {
     fn get_texture(&self) -> Option<Box<&glium::texture::Texture2d>>;
 }
 
-fn load_colors(buffer: &mut [ShapeVertex], colorMat: &[f32]) {
-    if colorMat.len() == 4 {
+fn load_colors(buffer: &mut [ShapeVertex], color_mat: &[f32]) {
+    if color_mat.len() == 4 {
         for x in 0..buffer.len() {
-            buffer[x].color = [colorMat[0], colorMat[1], colorMat[2], colorMat[3]];
+            buffer[x].color = [color_mat[0], color_mat[1], color_mat[2], color_mat[3]];
         }
     } else {
-        for c in 0..colorMat.len() / 4 {
-            let idx = c * 4;
+        // for c in 0..color_mat.len() / 4 {
+            // let idx = c * 4;
             // for x in (c * shapeStride..(c + 1) * shapeStride).filter(|x| x % 4 == 0) {
             // $buffer[x].color = [
-            // $colorMat[idx],
-            // $colorMat[idx + 1],
-            // $colorMat[idx + 2],
-            // $colorMat[idx + 3],
+            // $color_mat[idx],
+            // $color_mat[idx + 1],
+            // $color_mat[idx + 2],
+            // $color_mat[idx + 3],
             // ];
             // }
-        }
+        // }
     }
 }

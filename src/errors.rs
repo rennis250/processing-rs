@@ -35,6 +35,7 @@ pub enum ProcessingErr {
 	ErrorReadingShader(usize, io::Error),
 	DisplayNoCreate(DisplayCreationError),
 	ContextNoCreate(IncompatibleOpenGl),
+	CursorStateNotSet(String),
 	HeadlessRendererNoBuild(CreationError),
 	HeadlessContextError(ContextError),
 	HeadlessNoCreate(IncompatibleOpenGl),

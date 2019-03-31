@@ -63,7 +63,7 @@ impl<'a> Screen<'a> {
         if let Some(tex) = shape.get_texture() {
             let prog = &self.shader_bank[1];
             let u = create_uniforms!{self, tex: *tex};
-            if self.fillStuff {
+            if self.fill_stuff {
                 match *shape.fill_indices() {
                     &IndexType::Buffer { ind: ref ib } => {
                         framebuffer
@@ -77,7 +77,7 @@ impl<'a> Screen<'a> {
                     }
                 }
             };
-            if self.strokeStuff {
+            if self.stroke_stuff {
                 match *shape.stroke_indices() {
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
@@ -90,7 +90,7 @@ impl<'a> Screen<'a> {
         } else {
             let prog = &self.shader_bank[0];
             let u = create_uniforms!{self};
-            if self.fillStuff {
+            if self.fill_stuff {
                 match *shape.fill_indices() {
                     &IndexType::Buffer { ind: ref ib } => {
                         framebuffer
@@ -104,7 +104,7 @@ impl<'a> Screen<'a> {
                     }
                 }
             };
-            if self.strokeStuff {
+            if self.stroke_stuff {
                 match *shape.stroke_indices() {
                     &IndexType::NoBuffer { ind: ref ib } => {
                         framebuffer
@@ -135,19 +135,17 @@ impl<'a> Screen<'a> {
         let shape = mould.get_shape();
         let prog = &self.shader_bank[shader.get_idx()];
         let uniforms = shader.get_uniforms();
-        // let mut t = self.draw_params.clone();
-        // t.depth.write = false;
-        let t = glium::draw_parameters::DrawParameters {
-            depth: glium::Depth {
-                write: false,
-                test: glium::DepthTest::Overwrite,
-                ..Default::default()
-            },
-            multisampling: false,
-            smooth: None,
-            ..Default::default()
-        };
-        if self.fillStuff {
+        // let t = glium::draw_parameters::DrawParameters {
+        //     depth: glium::Depth {
+        //         write: false,
+        //         test: glium::DepthTest::Overwrite,
+        //         ..Default::default()
+        //     },
+        //     multisampling: false,
+        //     smooth: None,
+        //     ..Default::default()
+        // };
+        if self.fill_stuff {
             match *shape.fill_indices() {
                 &IndexType::Buffer { ind: ref ib } => {
                     framebuffer
@@ -173,7 +171,7 @@ impl<'a> Screen<'a> {
                 }
             }
         };
-        if self.strokeStuff {
+        if self.stroke_stuff {
             match *shape.stroke_indices() {
                 &IndexType::NoBuffer { ind: ref ib } => {
                     framebuffer

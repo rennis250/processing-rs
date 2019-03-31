@@ -1,12 +1,11 @@
 use std::f32;
 
 use glium;
-use glium::uniforms::Uniforms;
 
 use {Screen, ScreenType};
 use errors::ProcessingErr;
 
-use shapes::{Shape, ShapeVertex, IndexType, load_colors};
+use shapes::{Shape, ShapeVertex, IndexType};
 
 /// A line joins two points and is straight. It is completely specified by its two
 /// endpoints.
@@ -54,25 +53,25 @@ impl Line {
     ) -> Result<Self, ProcessingErr> {
         let mut x1 = x1i.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut y1 = y1i.iter().map(|&v| v).collect::<Vec<f64>>();
-        let mut z1 = z1i.iter().map(|&v| v).collect::<Vec<f64>>();
+        let z1 = z1i.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut x2 = x2i.iter().map(|&v| v).collect::<Vec<f64>>();
         let mut y2 = y2i.iter().map(|&v| v).collect::<Vec<f64>>();
-        let mut z2 = z2i.iter().map(|&v| v).collect::<Vec<f64>>();
-        if screen.preserveAspectRatio {
-            if screen.aspectRatio > 1f32 {
+        let z2 = z2i.iter().map(|&v| v).collect::<Vec<f64>>();
+        if screen.preserve_aspect_ratio {
+            if screen.aspect_ratio > 1f32 {
                 for i in 0..x1.len() {
-                    x1[i] = x1[i] / screen.aspectRatio as f64;
-                    x2[i] = x2[i] / screen.aspectRatio as f64;
+                    x1[i] = x1[i] / screen.aspect_ratio as f64;
+                    x2[i] = x2[i] / screen.aspect_ratio as f64;
                 }
             } else {
                 for i in 0..x1.len() {
-                    y1[i] = y1[i] * screen.aspectRatio as f64;
-                    y2[i] = y2[i] * screen.aspectRatio as f64;
+                    y1[i] = y1[i] * screen.aspect_ratio as f64;
+                    y2[i] = y2[i] * screen.aspect_ratio as f64;
                 }
             }
         }
 
-        if screen.strokeStuff {
+        if screen.stroke_stuff {
             let eps = f32::EPSILON;
             let mut shape = vec![];
             for (i, _) in x1.iter().enumerate() {
@@ -80,10 +79,11 @@ impl Line {
                     position: [
                         x1[i] as f32,
                         y1[i] as f32,
-                        // if z1[c] == 0.0 {
-                        eps * i as f32 // } else {
-                                       // z1[c] as f32
-                                       // },
+                        if z1[i] == 0.0 {
+                            eps * i as f32
+                        } else {
+                            z1[i] as f32
+                        },
                     ],
                     color: [0.0, 0.0, 0.0, 0.0],
                     texcoord: [0f32, 0.],
@@ -93,10 +93,11 @@ impl Line {
                     position: [
                         x2[i] as f32,
                         y2[i] as f32,
-                        // if z1[c] == 0.0 {
-                        eps * i as f32 // } else {
-                                       // z1[c] as f32
-                                       // },
+                        if z2[i] == 0.0 {
+                            eps * i as f32
+                        } else {
+                            z2[i] as f32
+                        },
                     ],
                     color: [0.0, 0.0, 0.0, 0.0],
                     texcoord: [0f32, 0.],
@@ -105,24 +106,24 @@ impl Line {
             }
 
             // lines need a custom load_colors implementation
-            if screen.strokeCol.len() == 4 {
+            if screen.stroke_col.len() == 4 {
                 for x in (0..shape.len()).filter(|x| x % 2 == 0) {
                     shape[x].color = [
-                        screen.strokeCol[0],
-                        screen.strokeCol[1],
-                        screen.strokeCol[2],
-                        screen.strokeCol[3],
+                        screen.stroke_col[0],
+                        screen.stroke_col[1],
+                        screen.stroke_col[2],
+                        screen.stroke_col[3],
                     ];
                     shape[x + 1].color = [
-                        screen.strokeCol[0],
-                        screen.strokeCol[1],
-                        screen.strokeCol[2],
-                        screen.strokeCol[3],
+                        screen.stroke_col[0],
+                        screen.stroke_col[1],
+                        screen.stroke_col[2],
+                        screen.stroke_col[3],
                     ];
                 }
             } else {
-                for c in 0..screen.strokeCol.len() / 4 {
-                    let idx = c * 4;
+                // for c in 0..screen.stroke_col.len() / 4 {
+                    // let idx = c * 4;
                     // for x in (c * shapeStride..(c + 1) * shapeStride).filter(|x| x % 4 == 0) {
                     // $buffer[x].color = [
                     // $colorMat[idx],
@@ -131,7 +132,7 @@ impl Line {
                     // $colorMat[idx + 3],
                     // ];
                     // }
-                }
+                // }
             }
 
             let fill_shape_buffer = match screen.display {

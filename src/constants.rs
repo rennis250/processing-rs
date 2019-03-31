@@ -16,7 +16,7 @@ pub const CLOSE: isize = 1;
 
 /// Perlin noise table. Use it as a precomputed source of noise that emulates the
 /// randomness found in natural processes.
-pub const perlin: [isize; 512] = [
+pub const PERLIN: [isize; 512] = [
     151,
     160,
     137,

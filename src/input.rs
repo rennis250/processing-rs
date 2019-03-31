@@ -1,6 +1,6 @@
 use glium::glutin;
 
-use {Screen, Key, MouseButton};
+use Screen;
 
 impl<'a> Screen<'a> {
 	/// Check if the given key was pressed since the last call to screen.release()
@@ -23,7 +23,7 @@ impl<'a> Screen<'a> {
 
 	/// Pause the program and wait for the space bar to be pressed. This is a
 	/// convienence which is useful for debugging and also in psychological experiments.
-    pub fn SpaceWait(&mut self) {
+    pub fn space_wait(&mut self) {
         self.events_loop.run_forever(|event| match event {
             glutin::Event::WindowEvent { event, .. } => {
                 match event {
@@ -45,7 +45,7 @@ impl<'a> Screen<'a> {
 
 	/// Check if the given mouse button was pressed since the last call to
 	/// screen.reveal() or screen.poll_events().
-    pub fn MousePress<B: Into<glutin::MouseButton>>(&mut self, button: B) -> bool {
+    pub fn mouse_press<B: Into<glutin::MouseButton>>(&mut self, button: B) -> bool {
         match self.mousepressed {
             Some(b) => {
                 let btn: glutin::MouseButton = button.into();
@@ -63,7 +63,7 @@ impl<'a> Screen<'a> {
 
 	/// Check if the given mouse button was released since the last call to
 	/// screen.reveal() or screen.poll_events().
-    pub fn MouseRelease<B: Into<glutin::MouseButton>>(&mut self, button: B) -> bool {
+    pub fn mouse_release<B: Into<glutin::MouseButton>>(&mut self, button: B) -> bool {
         match self.mousereleased {
             Some(b) => {
                 let btn: glutin::MouseButton = button.into();
@@ -81,13 +81,13 @@ impl<'a> Screen<'a> {
 
 	/// What was the x-coordinate of the mouse at the last call to screen.reveal()
 	/// or screen.poll_events().
-    pub fn MouseX(&mut self) -> f64 {
+    pub fn mouse_x(&mut self) -> f64 {
         self.mousepos.0
     }
 
 	/// What was the y-coordinate of the mouse at the last call to screen.reveal()
 	/// or screen.poll_events().
-    pub fn MouseY(&mut self) -> f64 {
+    pub fn mouse_y(&mut self) -> f64 {
         self.mousepos.1
     }
 

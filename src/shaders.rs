@@ -17,7 +17,7 @@ use errors::{ProcessingErr, ErrorReadingIncludeLineInShader};
 /// for the program, you need to call shader_info.set().
 #[derive(Clone, Debug)]
 pub struct ShaderInfo<U: Uniforms> {
-    ShaderIdx: usize,
+    shader_idx: usize,
     uniforms: Option<U>,
 }
 
@@ -31,7 +31,7 @@ pub struct ShaderInfo<U: Uniforms> {
 macro_rules! create_uniforms {
     ($screen:ident) => {
         {
-            let m: [[f32; 4]; 4] = $screen.matrices.currMatrix.into();
+            let m: [[f32; 4]; 4] = $screen.matrices.curr_matrix.into();
             let m = [[m[0][0], m[0][1], m[0][2], m[0][3]],
                     [m[1][0], m[1][1], m[1][2], m[1][3]],
                     [m[2][0], m[2][1], m[2][2], m[2][3]],
@@ -41,7 +41,7 @@ macro_rules! create_uniforms {
     };
     ($screen:ident, $($uniformName:ident: $value:expr),+) => {
         {
-            let m: [[f32; 4]; 4] = $screen.matrices.currMatrix.into();
+            let m: [[f32; 4]; 4] = $screen.matrices.curr_matrix.into();
             let m = [[m[0][0], m[0][1], m[0][2], m[0][3]],
                     [m[1][0], m[1][1], m[1][2], m[1][3]],
                     [m[2][0], m[2][1], m[2][2], m[2][3]],
@@ -61,7 +61,7 @@ impl<U: Uniforms> ShaderInfo<U> {
 	/// to shaders in `processing-rs`.
     pub fn new(idx: usize, uniforms: Option<U>) -> Self {
         ShaderInfo {
-            ShaderIdx: idx,
+            shader_idx: idx,
             uniforms: uniforms,
         }
     }
@@ -77,7 +77,7 @@ impl<U: Uniforms> ShaderInfo<U> {
 
 	/// Return the shader index that was assigned by OpenGL to your custom shader.
     pub fn get_idx(&self) -> usize {
-        self.ShaderIdx
+        self.shader_idx
     }
 
 	/// Return a reference to the uniforms that you assigned to your custom shader.
@@ -99,7 +99,7 @@ enum DrawType {
 
 impl<'a> Screen<'a> {
     // pub fn shader(&mut self, shader_name: &str) {
-    // gl::Uniform3f(gl::GetUniformLocation(shader_bank["fontDrawing"], "textColor"), GLfloat(state.fillCol[1].r), GLfloat(state.fillCol[1].g), GLfloat(state.fillCol[1].b))
+    // gl::Uniform3f(gl::GetUniformLocation(shader_bank["fontDrawing"], "textColor"), GLfloat(state.fill_col[1].r), GLfloat(state.fill_col[1].g), GLfloat(state.fill_col[1].b))
     // unsafe {
     // gl::Uniform3f(
     // gl::GetUniformLocation(
@@ -112,7 +112,7 @@ impl<'a> Screen<'a> {
     // );
     // }
     // } else if shader_name == "drawFramebuffer" {
-    // self.CurrShader = "drawFramebuffer".to_owned();
+    // self.curr_shader = "drawFramebuffer".to_owned();
     // }
     // }
 
@@ -150,17 +150,17 @@ impl<'a> Screen<'a> {
 	/// only want to use this convienence at outermost scope, but the choice is yours.
     pub fn load_frag_shader<U: Uniforms>(
         &mut self,
-        fragFilename: &str,
+        frag_filename: &str,
         uniforms: U,
     ) -> Result<ShaderInfo<U>, ProcessingErr> {
-        let fsh = parse_includes(fragFilename)?;
+        let fsh = parse_includes(frag_filename)?;
         let mut ff = File::create("full.frag").map_err(|e| ProcessingErr::FullShaderNoCreate(e))?;
         ff.write_all(fsh.as_bytes()).map_err(|e| ProcessingErr::FullShaderNoWrite(e))?;
-        ff.flush();
+        ff.flush().map_err(|e| ProcessingErr::FullShaderNoCreate(e))?;
 
         let vsh = "
     #version "
-            .to_owned() + &self.GlslVersion +
+            .to_owned() + &self.glsl_version +
             "
 
     in vec3 position;
@@ -221,13 +221,13 @@ impl<'a> Screen<'a> {
         self.shader_bank.push(program);
 
         Ok(ShaderInfo {
-            ShaderIdx: self.shader_bank.len() - 1,
+            shader_idx: self.shader_bank.len() - 1,
             uniforms: Some(uniforms),
         })
     }
 
     // pub fn load_shaders(
-    //     fragFilename: &str,
+    //     frag_filename: &str,
     //     vertFilename: &str,
     //     self: &mut State,
     //     GLobjs: &mut GLobjStruct,
@@ -235,7 +235,7 @@ impl<'a> Screen<'a> {
     // ) -> ShaderInfo {
     //     let mut shader_info = ShaderInfo::default();
     //     shader_info.ShaderName = rand::thread_rng().gen_ascii_chars().take(16).collect();
-    //     shader_info.FragFilename = fragFilename.to_owned();
+    //     shader_info.FragFilename = frag_filename.to_owned();
     //     shader_info.VertFilename = vertFilename.to_owned();
     //
     //     let fsh = parse_frag_includes(&shader_info);
@@ -298,26 +298,26 @@ impl<'a> Screen<'a> {
 	/// it provides. This only accepts ShaderInfo structs, which are output by
 	/// screen.load_frag_shader() and screen.load_shaders().
     #[inline]
-    pub fn shader<U: Uniforms>(&mut self, whichShader: &ShaderInfo<U>) {
+    pub fn shader<U: Uniforms>(&mut self, which_shader: &ShaderInfo<U>) {
         //shaderType enum - how to handle?...
-        self.AlternateShader = whichShader.ShaderIdx;
-        self.UsingAlternateShader = true;
-        self.CurrShader = whichShader.ShaderIdx;
+        self.alternate_shader = which_shader.shader_idx;
+        self.using_alternate_shader = true;
+        self.curr_shader = which_shader.shader_idx;
     }
 
 	/// Tell `processing-rs` to stop using any custom shaders and to return to
 	/// the default shaders.
     #[inline]
     pub fn reset_shader(&mut self) {
-        self.CurrShader = 0;
-        self.UsingAlternateShader = false;
+        self.curr_shader = 0;
+        self.using_alternate_shader = false;
     }
 }
 
 fn parse_includes(filename: &str) -> Result<String, ProcessingErr> {
     let ff = File::open(filename).map_err(|e| ProcessingErr::ShaderNotFound(e))?;
 
-    let mut totalContents: Vec<String> = Vec::with_capacity(1);
+    let mut total_contents: Vec<String> = Vec::with_capacity(1);
     let mut line_num = 0;
     for line in BufReader::new(ff).lines() {
     	line_num += 1;
@@ -337,11 +337,11 @@ fn parse_includes(filename: &str) -> Result<String, ProcessingErr> {
             let mut dat = File::open(&ifname[0..ln - 1]).map_err(|e| ProcessingErr::IncludeNotFound(e))?;
             let mut contents = String::new();
             dat.read_to_string(&mut contents).map_err(|e| ProcessingErr::ErrorReadingInclude(e))?;
-            totalContents.push(contents);
+            total_contents.push(contents);
         } else {
-            totalContents.push(l);
+            total_contents.push(l);
         }
     }
 
-    Ok(totalContents.join("\n"))
+    Ok(total_contents.join("\n"))
 }

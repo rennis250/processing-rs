@@ -1,10 +1,8 @@
 // Loading & Displaying
 use std::mem;
-use std::fs::File;
 use std::path::Path;
 
 use image_ext;
-use image_ext::{GenericImage, ImageBuffer};
 use gl;
 use errors::ProcessingErr;
 
@@ -22,32 +20,32 @@ impl<'a> Screen<'a> {
 	/// Not really useful in `processing-rs` since you will typically draw a texture to
 	/// the screen by attaching it to a Rect, rather than having a separate function
 	/// just for drawing an image to the screen. Should probably be removed.
-    pub fn imageMode(&mut self, mode: &str) {
-        self.imageMode = mode.to_owned();
+    pub fn image_mode(&mut self, mode: &str) {
+        self.image_mode = mode.to_owned();
     }
 
 	/// Stop applying tint to a drawn image.
-    pub fn noTint(&mut self) {
-        self.tintStuff = false
+    pub fn no_tint(&mut self) {
+        self.tint_stuff = false
     }
 
 	/// Save the current state of the screen to an image. The format will be determined
 	/// by the file extension.
     pub fn save(&self, filename: &str) -> Result<(), ProcessingErr> {
-        let mut data = vec![0f32; self.fbSize[0] as usize * self.fbSize[1] as usize * 4 * 4];
+        let data = vec![0f32; self.fb_size[0] as usize * self.fb_size[1] as usize * 4 * 4];
         unsafe {
             gl::ReadPixels(
                 0,
                 0,
-                self.fbSize[0] as gl::types::GLsizei,
-                self.fbSize[1] as gl::types::GLsizei,
+                self.fb_size[0] as gl::types::GLsizei,
+                self.fb_size[1] as gl::types::GLsizei,
                 gl::RGBA,
                 gl::FLOAT,
                 mem::transmute(&data[0]),
             );
         }
 
-        let mut img = image_ext::ImageBuffer::new(self.fbSize[0], self.fbSize[1]);
+        let mut img = image_ext::ImageBuffer::new(self.fb_size[0], self.fb_size[1]);
         let mut i = 0;
         for pixel in img.pixels_mut() {
             *pixel = image_ext::Rgba(
