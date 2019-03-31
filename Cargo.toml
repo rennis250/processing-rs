@@ -1,6 +1,6 @@
 [package]
 name = "processing"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Robert Ennis <Robert.Ennis@psychol.uni-giessen.de>"]
 description = """
   An implementation of the Processing environment for Rust, with influences from Cinder and
