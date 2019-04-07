@@ -26,7 +26,7 @@ fn main() -> Result<(), ProcessingErr> {
     let mut rng = rand::thread_rng();
     // uncomment the below two lines and comment the third if you want to test GLFW backend
     // let glf = p5::Screen::init()?;
-    // let mut screen = p5::Screen::new(300, 300, glf, true, false, false)?;
+    // let mut screen = p5::Screen::new(300, 300, glf, false, true, true)?;
     let mut screen = p5::Screen::new(300, 300, true, false, true)?;
 
     let mut ftbf = [0; 600];
@@ -38,7 +38,7 @@ fn main() -> Result<(), ProcessingErr> {
     let (tex, _, _) = screen.texture(&img)?;
 
     screen.space_wait();
-    screen.no_cursor()?;
+    screen.no_cursor();
 
     screen.stroke(&[0.], &[0.], &[0.], &[1.]);
     screen.fill(&[0.7], &[0.7], &[0.7], &[1.0]);
@@ -177,7 +177,7 @@ fn main() -> Result<(), ProcessingErr> {
         t.push(*x as f64);
     }
     println!("{:?}", std(&t));
-    
+
     Ok(())
 }
 

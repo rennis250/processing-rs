@@ -17,7 +17,7 @@
 //!
 //! Typical usage follows a common pattern:
 //!
-//!     1. Open a screen with processing::Screen::new(). This will return a 
+//!     1. Open a screen with processing::Screen::new(). This will return a
 //!        Screen struct, which is the central struct for coordinating draw calls,
 //!        managing shaders, and maintaining render state.
 //!
@@ -47,8 +47,8 @@
 //! it useful for psychological research, including color vision, material perception,
 //! motion, etc. For example, it tries to enable a 10-bit framebuffer if possible, for
 //! increased color fidelity, which is important in most color vision research. Besides
-//! this, it also aims to make sure that frame draws are as precisely synchronized with 
-//! the monitor refresh as possible. This works better with glutin than with glfw, and 
+//! this, it also aims to make sure that frame draws are as precisely synchronized with
+//! the monitor refresh as possible. This works better with glutin than with glfw, and
 //! on Mac, a few Objective-C functions are called to give the program elevated status
 //! for resources and to disable AppNap and such things while the program is running
 //! (code taken from the helpful PsychToolbox). In addition, when the crate is built
@@ -57,7 +57,7 @@
 //! will automatically call the library throguh the C FFI at screen initialization. It
 //! shouldn't interfere with normal operation of the operating system, so you can
 //! probably just accept the default behaviour. With all of this, combined with a change
-//! to a setting on Mac that allows one to quit Finder, one can achieve slightly better 
+//! to a setting on Mac that allows one to quit Finder, one can achieve slightly better
 //! synchronization than PsychToolbox on Mac, satisfying Psychtoolbox's requirements for
 //! good frame synchronization. However, this has only been tested on a Mac laptop with
 //! 10.13.3 and an Intel graphics card.
@@ -279,6 +279,8 @@ pub struct Screen<'a> {
     alternate_shader: usize,
     curr_texture: Option<glium::texture::Texture2d>,
     using_alternate_shader: bool,
+    uniforms: Option<glium::uniforms::UniformsStorage<'a>>,
+    texture_list: Option<Vec<(String, gl::types::GLuint)>>,
     glsl_version: String,
     drew_points: bool,
     keypressed: Option<glfw::Key>,

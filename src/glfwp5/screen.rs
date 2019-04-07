@@ -12,6 +12,7 @@ use owning_ref;
 use gl;
 use glium;
 use glium::backend::Facade;
+use glium::uniforms::AsUniformValue;
 use glium::{Surface, GlObject};
 use glfw;
 use glfw::{Action, Context};
@@ -378,6 +379,8 @@ impl<'a> Screen<'a> {
             curr_texture: None,
             alternate_shader: 1 << 20,
             using_alternate_shader: false,
+            uniforms: None,
+            texture_list: None,
             glsl_version: glsl_version,
             drew_points: false,
             keypressed: None,
@@ -388,10 +391,10 @@ impl<'a> Screen<'a> {
         })
     }
 
-	
+
 	/// Once you have finished drawing a number of shapes to the screen, you will need
 	/// to call screen.reveal() for the result to be viewable on the monitor. This is
-	/// because `processing-rs` uses double-buffering, whereby all of the drawing 
+	/// because `processing-rs` uses double-buffering, whereby all of the drawing
 	/// happens on a separate, hidden buffer and once that is done, it is transferred
 	/// to a viewable, monitor buffer. This is standard practice in graphics programming,
 	/// since it makes drawing faster and reduces screen tearing.
@@ -402,7 +405,8 @@ impl<'a> Screen<'a> {
             ScreenType::Headless(ref d) => d.draw(),
         };
         {
-            let uniforms = uniform! { texFramebuffer: &self.fbtexture };
+            let fb_tex_ref = &self.fbtexture;
+            let uniforms = uniform! { texFramebuffer: fb_tex_ref.as_uniform_value() };
             let p = &self.shader_bank[3];
             target
                 .draw(
@@ -537,7 +541,7 @@ impl<'a> Screen<'a> {
         self.mousepos = mpos;
 
         self.frame_count += 1;
-        
+
         Ok(())
     }
 
