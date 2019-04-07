@@ -4,6 +4,7 @@ use owning_ref;
 use Matrix4;
 use gl;
 use glium;
+use glium::uniforms::AsUniformValue;
 use glium::backend::Facade;
 use glium::{glutin, Surface, GlObject};
 use glium::glutin::GlContext;
@@ -314,6 +315,8 @@ impl<'a> Screen<'a> {
             curr_texture: None,
             alternate_shader: 1 << 20,
             using_alternate_shader: false,
+            uniforms: None,
+            texture_list: None,
             glsl_version: glsl_version,
             drew_points: false,
             keypressed: None,
@@ -590,6 +593,8 @@ impl<'a> Screen<'a> {
             curr_texture: None,
             alternate_shader: 1 << 20,
             using_alternate_shader: false,
+            uniforms: None,
+            texture_list: None,
             glsl_version: glsl_version,
             drew_points: false,
             keypressed: None,
@@ -613,7 +618,8 @@ impl<'a> Screen<'a> {
             ScreenType::Headless(ref d) => d.draw(),
         };
         {
-            let uniforms = uniform! { texFramebuffer: &self.fbtexture };
+        	let fb_tex_ref = &self.fbtexture;
+            let uniforms = uniform! { texFramebuffer: fb_tex_ref.as_uniform_value() };
             let p = &self.shader_bank[3];
             target
                 .draw(
@@ -687,7 +693,8 @@ impl<'a> Screen<'a> {
             ScreenType::Headless(ref d) => d.draw(),
         };
         {
-            let uniforms = uniform! { texFramebuffer: &self.fbtexture };
+        	let fb_tex_as_ref = &self.fbtexture;
+            let uniforms = uniform! { texFramebuffer: fb_tex_as_ref.as_uniform_value() };
             let p = &self.shader_bank[3];
             target
                 .draw(
@@ -772,7 +779,6 @@ impl<'a> Screen<'a> {
 //     glfw.make_context_current(Some(window));
 //     window.show();
 // }
-
 
 pub fn init_shaders(
     display: &glium::backend::Facade,

@@ -205,6 +205,8 @@ pub struct Screen<'a> {
     alternate_shader: usize,
     curr_texture: Option<glium::texture::Texture2d>,
     using_alternate_shader: bool,
+    uniforms: Option<glium::uniforms::UniformsStorage<'a>>,
+    texture_list: Option<Vec<(String, gl::types::GLuint)>>,
     glsl_version: String,
     drew_points: bool,
     keypressed: Option<glutin::VirtualKeyCode>,

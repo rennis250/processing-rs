@@ -1,6 +1,6 @@
 use glium;
 use glium::Surface;
-use glium::uniforms::Uniforms;
+use glium::uniforms::{UniformValue, AsUniformValue};
 
 use shapes::{Shape, IndexType};
 use shapes::mould::Mould;
@@ -62,7 +62,7 @@ impl<'a> Screen<'a> {
         };
         if let Some(tex) = shape.get_texture() {
             let prog = &self.shader_bank[1];
-            let u = create_uniforms!{self, tex: *tex};
+            let u = create_uniforms!{self, tex: (*tex).as_uniform_value()};
             if self.fill_stuff {
                 match *shape.fill_indices() {
                     &IndexType::Buffer { ind: ref ib } => {
@@ -126,9 +126,9 @@ impl<'a> Screen<'a> {
 
 	/// Draw a Mould (i.e., a shape plus a custom shader) onto the given framebuffer.
     #[inline]
-    pub fn draw_mould_onto_framebuffer<S: Shape, U: Uniforms>(
+    pub fn draw_mould_onto_framebuffer<S: Shape>(
         &self,
-        mould: &Mould<U, S>,
+        mould: &Mould<S>,
         framebuffer: &mut glium::framebuffer::SimpleFrameBuffer,
     ) -> Result<(), ProcessingErr> {
         let shader = mould.get_shader();
@@ -153,7 +153,7 @@ impl<'a> Screen<'a> {
                             *shape.fill_buffer(),
                             ib,
                             prog,
-                            uniforms,
+                            &uniforms,
                             &Default::default(),
                         )
                         .map_err(|e| ProcessingErr::FBDrawFailed(e))?
@@ -164,7 +164,7 @@ impl<'a> Screen<'a> {
                             *shape.fill_buffer(),
                             ib,
                             prog,
-                            uniforms,
+                            &uniforms,
                             &Default::default(),
                         )
                         .map_err(|e| ProcessingErr::FBDrawFailed(e))?
@@ -179,7 +179,7 @@ impl<'a> Screen<'a> {
                             *shape.stroke_buffer(),
                             ib,
                             &prog,
-                            uniforms,
+                            &uniforms,
                             &Default::default(),
                         )
                         .map_err(|e| ProcessingErr::FBDrawFailed(e))?

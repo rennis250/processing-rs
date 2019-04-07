@@ -1,4 +1,4 @@
-use glium::uniforms::Uniforms;
+use glium::uniforms::UniformValue;
 
 use shaders::ShaderInfo;
 use shapes::Shape;
@@ -7,13 +7,13 @@ use shapes::Shape;
 /// you want to modify the way a few shapes are drawn, without completely altering 
 /// the standard `processing-rs` rendering state. The concept was borrowed from
 /// libCinder.
-pub struct Mould<U: Uniforms, S: Shape> {
-    shape: S,
-    shader: ShaderInfo<U>,
+pub struct Mould<'a, S: Shape> {
+    shape: &'a S,
+    shader: &'a mut ShaderInfo<'a>,
 }
 
-impl<U: Uniforms, S: Shape> Mould<U, S> {
-    pub fn new(shape: S, shader: ShaderInfo<U>) -> Self {
+impl<'a, S: Shape> Mould<'a, S> {
+    pub fn new(shape: &'a S, shader: &'a mut ShaderInfo<'a>) -> Self {
         Mould {
             shape: shape,
             shader: shader,
@@ -21,14 +21,14 @@ impl<U: Uniforms, S: Shape> Mould<U, S> {
     }
 
     pub fn get_shape(&self) -> &S {
-        &self.shape
+        self.shape
     }
 
-    pub fn get_shader(&self) -> &ShaderInfo<U> {
-        &self.shader
+    pub fn get_shader(&self) -> &ShaderInfo<'a> {
+        self.shader
     }
 
-    pub fn set(&mut self, uniforms: U) {
-        self.shader.set(uniforms)
+    pub fn set(&mut self, uni_name: &'a str, uniform: UniformValue<'a>) {
+        self.shader.set(uni_name, uniform)
     }
 }

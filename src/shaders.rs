@@ -3,9 +3,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 
 use glium;
-use glium::uniforms::Uniforms;
-//use rand;
-//use rand::Rng;
+use glium::uniforms::{UniformsStorage, UniformValue};
 
 use {Screen, ScreenType};
 use errors::{ProcessingErr, ErrorReadingIncludeLineInShader};
@@ -15,10 +13,10 @@ use errors::{ProcessingErr, ErrorReadingIncludeLineInShader};
 /// in a Vector of programs that is managed by the Screen struct and also holds the
 /// current uniform values associated with that program. To change the uniform values
 /// for the program, you need to call shader_info.set().
-#[derive(Clone, Debug)]
-pub struct ShaderInfo<U: Uniforms> {
+pub struct ShaderInfo<'a> {
     shader_idx: usize,
-    uniforms: Option<U>,
+    uniforms: UniformsStorage<'a>,
+    texture_list: Vec<(String, gl::types::GLuint)>
 }
 
 /// This macro rolls your custom uniforms for your custom shader into the uniform
@@ -32,48 +30,34 @@ macro_rules! create_uniforms {
     ($screen:ident) => {
         {
             let m: [[f32; 4]; 4] = $screen.matrices.curr_matrix.into();
-            let m = [[m[0][0], m[0][1], m[0][2], m[0][3]],
+            let m = UniformValue::Mat4([[m[0][0], m[0][1], m[0][2], m[0][3]],
                     [m[1][0], m[1][1], m[1][2], m[1][3]],
                     [m[2][0], m[2][1], m[2][2], m[2][3]],
-                    [m[3][0], m[3][1], m[3][2], m[3][3]]];
+                    [m[3][0], m[3][1], m[3][2], m[3][3]]]);
             uniform!{MVP: m}
         }
     };
     ($screen:ident, $($uniformName:ident: $value:expr),+) => {
         {
             let m: [[f32; 4]; 4] = $screen.matrices.curr_matrix.into();
-            let m = [[m[0][0], m[0][1], m[0][2], m[0][3]],
+            let m = UniformValue::Mat4([[m[0][0], m[0][1], m[0][2], m[0][3]],
                     [m[1][0], m[1][1], m[1][2], m[1][3]],
                     [m[2][0], m[2][1], m[2][2], m[2][3]],
-                    [m[3][0], m[3][1], m[3][2], m[3][3]]];
+                    [m[3][0], m[3][1], m[3][2], m[3][3]]]);
             uniform!{$($uniformName: $value,)+ MVP: m}
         }
     }
 }
 
-impl<U: Uniforms> ShaderInfo<U> {
-	/// Create a new ShaderInfo struct that contains your uniforms and the shader
-	/// index that was returned by OpenGL. You should basically not need to use this
-	/// as a normal user, since screen.load_frag_shader() and screen.load_shaders()
-	/// use it internally and handle the details for you. The uniforms will need to
-	/// have been created by the macro `create_uniforms{}` provided by this crate.
-	/// Please see its documentation and use it whenever you need to pass uniforms
-	/// to shaders in `processing-rs`.
-    pub fn new(idx: usize, uniforms: Option<U>) -> Self {
-        ShaderInfo {
-            shader_idx: idx,
-            uniforms: uniforms,
-        }
-    }
-
+impl<'a> ShaderInfo<'a> {
 	/// Change the currently assigned uniform values for your custom shader. You will
 	/// need to redefine all of the uniforms via the `create_uniforms{}` macro, even if
 	/// only one uniform changes value. This really shouldn't have any performance
 	/// impact on your program, so don't worry. This constraint is imposed by raw
 	/// glium, so the situation wouldn't really change if you used that instead.
-    pub fn set(&mut self, uniforms: U) {
-        self.uniforms = Some(uniforms);
-    }
+    pub fn set(&mut self, uni_name: &'a str, value: UniformValue<'a>) {
+		self.uniforms = self.uniforms.add(uni_name, value);
+	}
 
 	/// Return the shader index that was assigned by OpenGL to your custom shader.
     pub fn get_idx(&self) -> usize {
@@ -81,10 +65,23 @@ impl<U: Uniforms> ShaderInfo<U> {
     }
 
 	/// Return a reference to the uniforms that you assigned to your custom shader.
-    pub fn get_uniforms(&self) -> &U { // currently, there is no way for uniforms to be
-    									// None, so I feel safe with this as is for now...
-        self.uniforms.as_ref().unwrap()
-    }
+    pub fn get_uniforms(&self) -> UniformsStorage<'a> {
+		self.uniforms.clone()
+	}
+	
+	pub fn get_texture_list(&self) -> Vec<(String, gl::types::GLuint)> {
+		self.texture_list.clone()
+	}
+	
+	pub fn add_to_texture_list(&mut self, name: &str, value: gl::types::GLuint) {
+		for kv in self.texture_list.iter_mut() {
+			if kv.0 == name {
+				*kv = (name.to_string(), value);
+				return;
+			}
+		}
+		self.texture_list.push((name.to_string(), value));
+	}
 }
 
 /// Processing has three ways to feed data through a shader: as points, as lines,
@@ -98,24 +95,6 @@ enum DrawType {
 }
 
 impl<'a> Screen<'a> {
-    // pub fn shader(&mut self, shader_name: &str) {
-    // gl::Uniform3f(gl::GetUniformLocation(shader_bank["fontDrawing"], "textColor"), GLfloat(state.fill_col[1].r), GLfloat(state.fill_col[1].g), GLfloat(state.fill_col[1].b))
-    // unsafe {
-    // gl::Uniform3f(
-    // gl::GetUniformLocation(
-    // *shader_bank.get("fontDrawing").unwrap(),
-    // CString::new("textColor").unwrap().as_ptr(),
-    // ),
-    // 0.0,
-    // 0.0,
-    // 0.0,
-    // );
-    // }
-    // } else if shader_name == "drawFramebuffer" {
-    // self.curr_shader = "drawFramebuffer".to_owned();
-    // }
-    // }
-
     // fn remove_all_shaders(shader_bank: &HashMap<String, u32>) {
     //     for (_, &p) in shader_bank {
     //         unsafe {
@@ -148,11 +127,10 @@ impl<'a> Screen<'a> {
 	/// allows you to keep things a bit more modular and managable. Please note though,
 	/// it will do this no matter where you put the line, so remain aware. You probably
 	/// only want to use this convienence at outermost scope, but the choice is yours.
-    pub fn load_frag_shader<U: Uniforms>(
+    pub fn load_frag_shader(
         &mut self,
-        frag_filename: &str,
-        uniforms: U,
-    ) -> Result<ShaderInfo<U>, ProcessingErr> {
+        frag_filename: &str
+    ) -> Result<ShaderInfo, ProcessingErr> {
         let fsh = parse_includes(frag_filename)?;
         let mut ff = File::create("full.frag").map_err(|e| ProcessingErr::FullShaderNoCreate(e))?;
         ff.write_all(fsh.as_bytes()).map_err(|e| ProcessingErr::FullShaderNoWrite(e))?;
@@ -220,9 +198,16 @@ impl<'a> Screen<'a> {
         };
         self.shader_bank.push(program);
 
+		let m: [[f32; 4]; 4] = self.matrices.curr_matrix.into();
+		let m = UniformValue::Mat4([[m[0][0], m[0][1], m[0][2], m[0][3]],
+			[m[1][0], m[1][1], m[1][2], m[1][3]],
+			[m[2][0], m[2][1], m[2][2], m[2][3]],
+			[m[3][0], m[3][1], m[3][2], m[3][3]]]);
+
         Ok(ShaderInfo {
             shader_idx: self.shader_bank.len() - 1,
-            uniforms: Some(uniforms),
+            uniforms: UniformsStorage::new("MVP", m),
+            texture_list: vec![]
         })
     }
 
@@ -298,11 +283,13 @@ impl<'a> Screen<'a> {
 	/// it provides. This only accepts ShaderInfo structs, which are output by
 	/// screen.load_frag_shader() and screen.load_shaders().
     #[inline]
-    pub fn shader<U: Uniforms>(&mut self, which_shader: &ShaderInfo<U>) {
+    pub fn shader(&mut self, which_shader: &ShaderInfo<'a>) {
         //shaderType enum - how to handle?...
-        self.alternate_shader = which_shader.shader_idx;
+        self.alternate_shader = which_shader.get_idx();
         self.using_alternate_shader = true;
-        self.curr_shader = which_shader.shader_idx;
+        self.uniforms = Some(which_shader.get_uniforms());
+        self.texture_list = Some(which_shader.get_texture_list());
+        self.curr_shader = which_shader.get_idx();
     }
 
 	/// Tell `processing-rs` to stop using any custom shaders and to return to
@@ -310,6 +297,8 @@ impl<'a> Screen<'a> {
     #[inline]
     pub fn reset_shader(&mut self) {
         self.curr_shader = 0;
+        self.uniforms = None;
+        self.texture_list = None;
         self.using_alternate_shader = false;
     }
 }
