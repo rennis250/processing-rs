@@ -68,11 +68,11 @@ impl<'a> ShaderInfo<'a> {
     pub fn get_uniforms(&self) -> UniformsStorage<'a> {
 		self.uniforms.clone()
 	}
-	
+
 	pub fn get_texture_list(&self) -> Vec<(String, gl::types::GLuint)> {
 		self.texture_list.clone()
 	}
-	
+
 	pub fn add_to_texture_list(&mut self, name: &str, value: gl::types::GLuint) {
 		for kv in self.texture_list.iter_mut() {
 			if kv.0 == name {
@@ -220,7 +220,7 @@ impl<'a> Screen<'a> {
         let mut vf = File::create("full.vert").map_err(|e| ProcessingErr::FullShaderNoCreate(e))?;
         vf.write_all(vsh.as_bytes()).map_err(|e| ProcessingErr::FullShaderNoWrite(e))?;
         vf.flush().map_err(|e| ProcessingErr::FullShaderNoCreate(e))?;
-        
+
         let fsh = parse_includes(frag_filename)?;
         let mut ff = File::create("full.frag").map_err(|e| ProcessingErr::FullShaderNoCreate(e))?;
         ff.write_all(fsh.as_bytes()).map_err(|e| ProcessingErr::FullShaderNoWrite(e))?;
