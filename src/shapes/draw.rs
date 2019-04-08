@@ -1,7 +1,8 @@
 use glium::Surface;
 use glium::uniforms::{UniformValue, AsUniformValue};
 
-use shapes::{Shape, IndexType};
+use shapes::{Shape, IndexType, ShapeVertex};
+use shaders::ShaderInfo;
 use shapes::mould::Mould;
 use errors::ProcessingErr;
 
@@ -154,6 +155,53 @@ impl<'a> Screen<'a> {
                     framebuffer
                         .draw(
                             *shape.stroke_buffer(),
+                            ib,
+                            &prog,
+                            &uniforms,
+                            &self.draw_params,
+                        )
+                        .map_err(|e| ProcessingErr::FBDrawFailed(e))?
+                }
+                _ => {}
+            }
+        };
+        
+        Ok(())
+    }
+    
+    // generics do not work well across an FFI, so this is a specialized function for
+    // dealing communicating across the FFI
+    #[inline]
+    pub fn draw_mould_extern(&mut self,
+    	shader: &ShaderInfo<'a>,
+    	fill_indices: Box<&IndexType>,
+    	fill_buffer: Box<&glium::vertex::VertexBuffer<ShapeVertex>>,
+    	stroke_indices: Box<&IndexType>,
+    	stroke_buffer: Box<&glium::vertex::VertexBuffer<ShapeVertex>>
+    ) -> Result<(), ProcessingErr> {
+        let prog = &self.shader_bank[shader.get_idx()];
+        let uniforms = shader.get_uniforms();
+        let framebuffer = &mut self.fbo;
+        if self.fill_stuff {
+            match *fill_indices {
+                &IndexType::Buffer { ind: ref ib } => {
+                    framebuffer
+                        .draw(*fill_buffer, ib, prog, &uniforms, &self.draw_params)
+                        .map_err(|e| ProcessingErr::FBDrawFailed(e))?
+                }
+                &IndexType::NoBuffer { ind: ref ib } => {
+                    framebuffer
+                        .draw(*fill_buffer, ib, prog, &uniforms, &self.draw_params)
+                        .map_err(|e| ProcessingErr::FBDrawFailed(e))?
+                }
+            }
+        };
+        if self.stroke_stuff {
+            match *stroke_indices {
+                &IndexType::NoBuffer { ind: ref ib } => {
+                    framebuffer
+                        .draw(
+                            *stroke_buffer,
                             ib,
                             &prog,
                             &uniforms,

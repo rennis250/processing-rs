@@ -228,7 +228,7 @@ impl<'a> Screen<'a> {
 
         let program = match self.display {
             ScreenType::Window(ref d) => {
-                glium::Program::new(
+                match glium::Program::new(
                     d,
                     glium::program::ProgramCreationInput::SourceCode {
                         vertex_shader: &vsh,
@@ -246,7 +246,7 @@ impl<'a> Screen<'a> {
                 }
             }
             ScreenType::Headless(ref d) => {
-                glium::Program::new(
+                match glium::Program::new(
                     d,
                     glium::program::ProgramCreationInput::SourceCode {
                         vertex_shader: &vsh,
