@@ -409,7 +409,7 @@ impl<'a> Screen<'a> {
             w,
             h,
         ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
-        let oh = owning_ref::OwningHandle::new_with_fn(
+        let mut oh = owning_ref::OwningHandle::new_with_fn(
             Box::new(FBtexs {
                 fbtex: fbtexture,
                 depthtexture: depthtexture,
@@ -506,6 +506,9 @@ impl<'a> Screen<'a> {
             glium::index::PrimitiveType::TrianglesList,
             &[0u16, 1, 2, 0, 2, 3],
         ).map_err(|e| ProcessingErr::IBNoCreate(e))?;
+        
+        // mid-gray background by default
+        oh.clear_color_srgb(0.8, 0.8, 0.8, 1.0);
 
         Ok(Screen {
             // start with default identity matrix, as expected.
