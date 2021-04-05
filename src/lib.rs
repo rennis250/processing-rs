@@ -80,11 +80,11 @@ extern crate objc;
 #[cfg(target_os = "macos")]
 extern crate cocoa;
 #[cfg(target_os = "macos")]
-use cocoa::foundation::{NSProcessInfo, NSString};
-#[cfg(target_os = "macos")]
 use cocoa::base::nil;
+#[cfg(target_os = "macos")]
+use cocoa::foundation::{NSProcessInfo, NSString};
 
-use nalgebra::{Matrix4, Vector3, Unit};
+use nalgebra::{Matrix4, Unit, Vector3};
 
 #[cfg(not(feature = "glfw"))]
 pub use glium::*;
@@ -101,13 +101,13 @@ pub use glfwp5::screen;
 #[macro_use]
 pub mod shaders;
 pub mod color;
+pub mod errors;
+pub mod framebuffers;
+pub mod image;
+pub mod rendering;
 pub mod shapes;
 pub mod textures;
-pub mod framebuffers;
 pub mod transform;
-pub mod rendering;
-pub mod image;
-pub mod errors;
 
 #[cfg(not(feature = "glfw"))]
 pub mod environment;
@@ -166,7 +166,7 @@ pub struct Screen<'a> {
     fb_index_buffer: glium::index::IndexBuffer<u16>,
     fbo: owning_ref::OwningHandle<Box<FBtexs>, Box<glium::framebuffer::SimpleFrameBuffer<'a>>>,
     display: ScreenType,
-    events_loop: glutin::EventsLoop,
+    events_loop: glutin::event_loop::EventLoop<()>,
     draw_params: glium::draw_parameters::DrawParameters<'a>,
     pub matrices: GLmatStruct,
     bg_col: Vec<f32>,
@@ -200,7 +200,7 @@ pub struct Screen<'a> {
     frame_count: isize,
     fonts_initialized: bool,
     curr_shader: usize,
-    curr_cursor: glium::glutin::MouseCursor,
+    curr_cursor: glium::glutin::window::CursorIcon,
     wrap: glium::uniforms::SamplerWrapFunction,
     alternate_shader: usize,
     curr_texture: Option<glium::texture::Texture2d>,
@@ -209,17 +209,17 @@ pub struct Screen<'a> {
     texture_list: Option<Vec<(String, gl::types::GLuint)>>,
     glsl_version: String,
     drew_points: bool,
-    keypressed: Option<glutin::VirtualKeyCode>,
-    mousepressed: Option<glutin::MouseButton>,
-    mousereleased: Option<glutin::MouseButton>,
-    mousepos: (f64, f64),
+    keypressed: Option<glutin::event::VirtualKeyCode>,
+    mousepressed: Option<glutin::event::MouseButton>,
+    mousereleased: Option<glutin::event::MouseButton>,
+    mousepos: glutin::dpi::PhysicalPosition<f64>,
     headless: bool,
 }
 
 #[cfg(feature = "glfw")]
-use std::sync::mpsc::Receiver;
-#[cfg(feature = "glfw")]
 use glfwp5::backend::Display;
+#[cfg(feature = "glfw")]
+use std::sync::mpsc::Receiver;
 #[cfg(feature = "glfw")]
 enum ScreenType {
     Window(Display),
@@ -316,9 +316,10 @@ fn mac_priority() {
     let NSActivityUserInitiated = (0x00FFFFFFu64 | NSActivityIdleSystemSleepDisabled);
     let NSActivityLatencyCritical = 0xFF00000000u64;
 
-    let options = NSActivityIdleDisplaySleepDisabled | NSActivityIdleSystemSleepDisabled |
-        NSActivitySuddenTerminationDisabled |
-        NSActivityAutomaticTerminationDisabled;
+    let options = NSActivityIdleDisplaySleepDisabled
+        | NSActivityIdleSystemSleepDisabled
+        | NSActivitySuddenTerminationDisabled
+        | NSActivityAutomaticTerminationDisabled;
     let options = options | NSActivityUserInitiated | NSActivityLatencyCritical;
 
     unsafe {

@@ -1,9 +1,9 @@
 use glium;
 
-use {Screen, ScreenType};
 use errors::ProcessingErr;
+use {Screen, ScreenType};
 
-use shapes::{Shape, ShapeVertex, IndexType, load_colors};
+use shapes::{load_colors, IndexType, Shape, ShapeVertex};
 
 /// A cube is a three-dimensional volume with equal width, height, and depth, so a box.
 pub struct Cube {
@@ -36,119 +36,18 @@ impl Shape for Cube {
 }
 
 impl Cube {
-	/// Create a new Cube of a given scale (s) to be drawn later.
-	/// A scale of 1 is the standard "unit" cube and any other values
-	/// give back a version of this cube scaled up or down.
+    /// Create a new Cube of a given scale (s) to be drawn later.
+    /// A scale of 1 is the standard "unit" cube and any other values
+    /// give back a version of this cube scaled up or down.
     pub fn new(screen: &Screen, s: &[f64]) -> Result<Self, ProcessingErr> {
         let cube_vertices = [
-            -1.0f32,
-            -1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            1.0,
-            -1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            -1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            1.0,
-            1.0,
-            1.0,
-            -1.0,
-            1.0,
-            -1.0,
-            -1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            -1.0,
-            1.0,
-            1.0,
-            1.0,
-            -1.0,
-            1.0,
+            -1.0f32, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0,
+            -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0,
+            1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
+            1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0,
+            1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0,
+            1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0,
+            1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, 1.0,
         ];
 
         let mut shape = vec![];
@@ -207,18 +106,22 @@ impl Cube {
 
         load_colors(&mut shape, &screen.fill_col);
         let fill_shape_buffer = match screen.display {
-            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
-                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
-            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
-                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+            ScreenType::Window(ref d) => {
+                glium::VertexBuffer::new(d, &shape).map_err(|e| ProcessingErr::VBNoCreate(e))?
+            }
+            ScreenType::Headless(ref d) => {
+                glium::VertexBuffer::new(d, &shape).map_err(|e| ProcessingErr::VBNoCreate(e))?
+            }
         };
 
         load_colors(&mut shape, &screen.stroke_col);
         let stroke_shape_buffer = match screen.display {
-            ScreenType::Window(ref d) => glium::VertexBuffer::new(d, &shape)
-                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
-            ScreenType::Headless(ref d) => glium::VertexBuffer::new(d, &shape)
-                	.map_err(|e| ProcessingErr::VBNoCreate(e))?,
+            ScreenType::Window(ref d) => {
+                glium::VertexBuffer::new(d, &shape).map_err(|e| ProcessingErr::VBNoCreate(e))?
+            }
+            ScreenType::Headless(ref d) => {
+                glium::VertexBuffer::new(d, &shape).map_err(|e| ProcessingErr::VBNoCreate(e))?
+            }
         };
 
         // screen.draw(fill_shape_buffer, stroke_shape_buffer, Some(index_buffer));

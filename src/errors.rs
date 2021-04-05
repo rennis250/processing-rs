@@ -1,19 +1,19 @@
 use glium::backend::glutin::DisplayCreationError;
-use glium::texture::TextureCreationError;
 use glium::framebuffer::ValidationError;
-use glium::index;
-use glium::vertex;
-use glium::IncompatibleOpenGl;
 use glium::glutin::ContextError;
 use glium::glutin::CreationError;
-use glium::DrawError;
-use glium::SwapBuffersError;
+use glium::index;
 use glium::program::ProgramCreationError;
+use glium::texture::TextureCreationError;
+use glium::vertex;
+use glium::DrawError;
+use glium::IncompatibleOpenGl;
+use glium::SwapBuffersError;
 use image_ext::ImageError;
 
-use std::io;
-use std::fmt;
 use std::error::Error;
+use std::fmt;
+use std::io;
 
 #[derive(Debug)]
 pub enum ProcessingErr {
@@ -30,7 +30,7 @@ pub enum ProcessingErr {
 	FullShaderNoCreate(io::Error),
 	FullShaderNoWrite(io::Error),
 	ImageNotFound(ImageError),
-	ImageNotSaved(io::Error),
+	ImageNotSaved(ImageError),
 	ErrorReadingInclude(io::Error),
 	ErrorReadingShader(usize, io::Error),
 	DisplayNoCreate(DisplayCreationError),
@@ -41,18 +41,18 @@ pub enum ProcessingErr {
 	HeadlessNoCreate(IncompatibleOpenGl),
 	GLFWWindowNoCreate,
 	GLFWAlreadyInited,
-	GLFWInternal
+	GLFWInternal,
 }
 
 #[derive(Debug)]
 pub struct ErrorReadingIncludeLineInShader {
-	details: String
+	details: String,
 }
 
 impl ErrorReadingIncludeLineInShader {
 	pub fn new(msg: &str) -> Self {
 		ErrorReadingIncludeLineInShader {
-			details: msg.to_string()
+			details: msg.to_string(),
 		}
 	}
 }

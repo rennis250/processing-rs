@@ -16,25 +16,28 @@ exclude = [
   "test.jpg"
 ]
 build = "build.rs"
+link = "glfw3"
 
 [dependencies]
-glium = { path = "/Users/rje/my_docs/glium" }
+glium = { path = "../glium" }
 gl = "0.6.3"
+
 nalgebra = "0.16.6"
-image = "0.17.0"
+image = "0.23.0"
 owning_ref = "0.3.3"
 
 [build-dependencies]
 cc = "1.0"
 
 [features]
-default = []
+default = ["glfwp5"]
 glfwp5 = ["glfw"]
 
 [dependencies.glfw]
+git = "https://github.com/PistonDevelopers/glfw-rs"
 default-features = false
-version = "0.22"
-features = ["image"]
+# version = "0.22"
+features = ["image", "glfw-sys"]
 optional = true
 
 [dev-dependencies]

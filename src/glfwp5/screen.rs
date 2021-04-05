@@ -1,71 +1,71 @@
 #[cfg(feature = "glfw")]
-
 use std::str;
 use std::sync::mpsc::Receiver;
 
 #[cfg(target_os = "macos")]
-use cocoa::foundation::{NSProcessInfo, NSString};
-#[cfg(target_os = "macos")]
 use cocoa::base::nil;
+#[cfg(target_os = "macos")]
+use cocoa::foundation::{NSProcessInfo, NSString};
 
-use owning_ref;
 use gl;
+use glfw;
+use glfw::{Action, Context};
 use glium;
 use glium::backend::Facade;
 use glium::uniforms::AsUniformValue;
-use glium::{Surface, GlObject};
-use glfw;
-use glfw::{Action, Context};
+use glium::{GlObject, Surface};
+use owning_ref;
 
+use errors::ProcessingErr;
 use glfwp5::backend::Display;
 use Matrix4;
-use {Screen, GLmatStruct, FBtexs, DFBFDVertex};
 use ScreenType;
-use errors::ProcessingErr;
+use {DFBFDVertex, FBtexs, GLmatStruct, Screen};
 
 #[cfg(target_os = "macos")]
 use mac_priority;
 
 impl<'a> Screen<'a> {
-	/// If you are using glfw as a backend, then you need to call this before calling
-	/// Screen::new(). It is required by the glfw library. The result will be a
-	/// glfw::Glfw struct that should be passed to Screen::new() as input, which will
-	/// handle the rest of the initialization.
+    /// If you are using glfw as a backend, then you need to call this before calling
+    /// Screen::new(). It is required by the glfw library. The result will be a
+    /// glfw::Glfw struct that should be passed to Screen::new() as input, which will
+    /// handle the rest of the initialization.
     pub fn init() -> Result<glfw::Glfw, ProcessingErr> {
         match glfw::init(glfw::FAIL_ON_ERRORS) {
-			Ok(res) => Ok(res),
-			Err(e) => match e {
-				glfw::InitError::AlreadyInitialized => Err(ProcessingErr::GLFWAlreadyInited),
-				glfw::InitError::Internal => Err(ProcessingErr::GLFWInternal)
-			}
+            Ok(res) => Ok(res),
+            Err(e) => match e {
+                glfw::InitError::AlreadyInitialized => Err(ProcessingErr::GLFWAlreadyInited),
+                glfw::InitError::Internal => Err(ProcessingErr::GLFWInternal),
+            },
         }
     }
 
-	/// Create a new Screen struct with a given width and height. Also, specify if
-	/// the Screen should be fullscreen, if it should preserve aspect ratio on wide
-	/// monitors, and if it should be synchronize to the refresh rate of the monitor
-	/// (this should always be true, except in rare circumstances when you need really
-	/// high draw rates, such as when doing intense raymarching in a fragment shader).
-	///
-	/// In the case of glfw as a backend, you will also need to provide the glfw::Glfw
-	/// struct that is returned by Screen::init().
-	///
-	/// It is necessary to call this function before everything else. It's what gets
-	/// the whole show going. Once you have a Screen, you can then create shapes,
-	/// load textures, draw, check for user input, etc.
-	///
-	/// Screen setup tries to choose a number of glutin and glium defaults that will
-	/// satisfy most users, especially those that want speed but still have a
-	/// visually pleasing display of shapes with good color fidelity, if possible.
+    /// Create a new Screen struct with a given width and height. Also, specify if
+    /// the Screen should be fullscreen, if it should preserve aspect ratio on wide
+    /// monitors, and if it should be synchronize to the refresh rate of the monitor
+    /// (this should always be true, except in rare circumstances when you need really
+    /// high draw rates, such as when doing intense raymarching in a fragment shader).
+    ///
+    /// In the case of glfw as a backend, you will also need to provide the glfw::Glfw
+    /// struct that is returned by Screen::init().
+    ///
+    /// It is necessary to call this function before everything else. It's what gets
+    /// the whole show going. Once you have a Screen, you can then create shapes,
+    /// load textures, draw, check for user input, etc.
+    ///
+    /// Screen setup tries to choose a number of glutin and glium defaults that will
+    /// satisfy most users, especially those that want speed but still have a
+    /// visually pleasing display of shapes with good color fidelity, if possible.
     pub fn new(
         width: u32,
         height: u32,
         mut glfw: glfw::Glfw,
         fullscreen: bool,
         preserve_aspect_ratio: bool,
-        headless: bool
+        headless: bool,
     ) -> Result<Screen<'a>, ProcessingErr> {
-        #[cfg(target_os = "macos")] mac_priority();
+        #[cfg(target_os = "macos")]
+        mac_priority();
 
         glfw.window_hint(glfw::WindowHint::Visible(!headless));
         glfw.window_hint(glfw::WindowHint::Resizable(false));
@@ -89,12 +89,15 @@ impl<'a> Screen<'a> {
         let mut h = height;
         let window;
         if fullscreen {
-            let (mut win, e) = glfw.create_window(w, h, "processingrs", glfw::WindowMode::Windowed)
+            let (mut win, e) = glfw
+                .create_window(w, h, "processingrs", glfw::WindowMode::Windowed)
                 .ok_or(ProcessingErr::GLFWWindowNoCreate)?;
             glfw.with_primary_monitor_mut(|_: &mut _, m: Option<&glfw::Monitor>| {
                 let monitor = m.expect("Did not get access to a monitor.");
 
-                let mode = monitor.get_video_mode().expect("Did not get access to the monitors preferred video mode.");
+                let mode = monitor
+                    .get_video_mode()
+                    .expect("Did not get access to the monitors preferred video mode.");
 
                 w = mode.width;
                 h = mode.height;
@@ -111,7 +114,8 @@ impl<'a> Screen<'a> {
             window = win;
             events_loop = e;
         } else {
-            let (mut win, e) = glfw.create_window(w, h, "processingrs", glfw::WindowMode::Windowed)
+            let (mut win, e) = glfw
+                .create_window(w, h, "processingrs", glfw::WindowMode::Windowed)
                 .ok_or(ProcessingErr::GLFWWindowNoCreate)?;
             window = win;
             events_loop = e;
@@ -128,14 +132,12 @@ impl<'a> Screen<'a> {
 
         let display = Display::new(window)?;
 
-        display.gl_window_mut().set_key_polling(true);
+        display.gl_window_mut().set_all_polling(true);
         display.gl_window_mut().make_current();
 
         // Load the OpenGL function pointers
         // TODO: `as *const _` will not be needed once glutin is updated to the latest gl version
-        gl::load_with(|symbol| {
-            (*display.gl_window_mut()).get_proc_address(symbol) as *const _
-        });
+        gl::load_with(|symbol| (*display.gl_window_mut()).get_proc_address(symbol) as *const _);
 
         let mut glsl_version;
         {
@@ -173,7 +175,8 @@ impl<'a> Screen<'a> {
             glium::texture::MipmapsOption::NoMipmap,
             w,
             h,
-        ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
+        )
+        .map_err(|e| ProcessingErr::TextureNoCreate(e))?;
         let fbid = fb_texture.get_id();
         let depthtexture = glium::texture::DepthTexture2d::empty_with_format(
             &display,
@@ -181,7 +184,8 @@ impl<'a> Screen<'a> {
             glium::texture::MipmapsOption::NoMipmap,
             w,
             h,
-        ).map_err(|e| ProcessingErr::TextureNoCreate(e))?;
+        )
+        .map_err(|e| ProcessingErr::TextureNoCreate(e))?;
         let oh = owning_ref::OwningHandle::new_with_fn(
             Box::new(FBtexs {
                 fbtex: fb_texture,
@@ -276,13 +280,14 @@ impl<'a> Screen<'a> {
         };
         let shape = vec![vertex1, vertex2, vertex3, vertex4];
 
-        let fb_shape_buffer = glium::VertexBuffer::new(&display, &shape)
-        	.map_err(|e| ProcessingErr::VBNoCreate(e))?;
+        let fb_shape_buffer =
+            glium::VertexBuffer::new(&display, &shape).map_err(|e| ProcessingErr::VBNoCreate(e))?;
         let fb_index_buffer = glium::IndexBuffer::new(
             &display,
             glium::index::PrimitiveType::TrianglesList,
             &[0u16, 1, 2, 0, 2, 3],
-        ).map_err(|e| ProcessingErr::IBNoCreate(e))?;
+        )
+        .map_err(|e| ProcessingErr::IBNoCreate(e))?;
 
         display.gl_window_mut().swap_buffers();
         glfw.poll_events();
@@ -296,42 +301,14 @@ impl<'a> Screen<'a> {
             // start with default identity matrix, as expected.
             matrices: GLmatStruct {
                 curr_matrix: Matrix4::new(
-                    1.0f32,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
+                    1.0f32, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
                     1.0,
                 ),
                 matrix_stack: vec![
                     Matrix4::new(
-                    1.0f32,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    1.0
-                );
+                        1.0f32, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+                        0.0, 1.0
+                    );
                     1
                 ],
             },
@@ -339,7 +316,11 @@ impl<'a> Screen<'a> {
             fbtexture: fbtexture,
             fb_shape_buffer: fb_shape_buffer,
             fb_index_buffer: fb_index_buffer,
-            display: if headless { ScreenType::Headless(display) } else { ScreenType::Window(display) },
+            display: if headless {
+                ScreenType::Headless(display)
+            } else {
+                ScreenType::Window(display)
+            },
             glfw: glfw,
             events_loop: events_loop,
             draw_params: draw_params,
@@ -391,13 +372,12 @@ impl<'a> Screen<'a> {
         })
     }
 
-
-	/// Once you have finished drawing a number of shapes to the screen, you will need
-	/// to call screen.reveal() for the result to be viewable on the monitor. This is
-	/// because `processing-rs` uses double-buffering, whereby all of the drawing
-	/// happens on a separate, hidden buffer and once that is done, it is transferred
-	/// to a viewable, monitor buffer. This is standard practice in graphics programming,
-	/// since it makes drawing faster and reduces screen tearing.
+    /// Once you have finished drawing a number of shapes to the screen, you will need
+    /// to call screen.reveal() for the result to be viewable on the monitor. This is
+    /// because `processing-rs` uses double-buffering, whereby all of the drawing
+    /// happens on a separate, hidden buffer and once that is done, it is transferred
+    /// to a viewable, monitor buffer. This is standard practice in graphics programming,
+    /// since it makes drawing faster and reduces screen tearing.
     #[inline]
     pub fn reveal(&mut self) -> Result<(), ProcessingErr> {
         let mut target = match self.display {
@@ -425,6 +405,7 @@ impl<'a> Screen<'a> {
         let mut mr = None;
         let mut mpos = (-100., -100.);
         self.glfw.poll_events();
+        // first part of tuple is the time as reported by glfwGetTime!!!
         for (_, event) in glfw::flush_messages(&self.events_loop) {
             match event {
                 // glfw::WindowEvent::Pos(x, y) => {
@@ -433,7 +414,11 @@ impl<'a> Screen<'a> {
                 // glfw::WindowEvent::Size(w, h) => {
                 //     window.set_title(&format!("Time: {:?}, Window size: ({:?}, {:?})", time, w, h))
                 // }
-                glfw::WindowEvent::Close => panic!("need a smoother way to quit..."),
+                // not allowed to call self.end_drawing() here, because of borrowing rules
+                glfw::WindowEvent::Close => match self.display {
+                    ScreenType::Window(ref d) => (*d).gl_window_mut().set_should_close(true),
+                    ScreenType::Headless(ref d) => (*d).gl_window_mut().set_should_close(true),
+                },
                 // glfw::WindowEvent::Refresh => {
                 //     println!("Time: {:?}, Window refresh callback triggered.", time)
                 // }
@@ -545,9 +530,9 @@ impl<'a> Screen<'a> {
         Ok(())
     }
 
-	/// This will safely close a window and drop the Screen struct associated with it.
-	/// Currently unimplemented, so for now, to close a window, you have to quit the
-	/// running program.
+    /// This will safely close a window and drop the Screen struct associated with it.
+    /// Currently unimplemented, so for now, to close a window, you have to quit the
+    /// running program.
     pub fn end_drawing(self) {
         match self.display {
             ScreenType::Window(ref d) => (*d).gl_window_mut().set_should_close(true),
@@ -567,14 +552,18 @@ impl<'a> Screen<'a> {
 //     window.show();
 // }
 
-pub fn init_shaders(display: &Display, glsl_version: &str) -> Result<Vec<glium::program::Program>, ProcessingErr> {
+pub fn init_shaders(
+    display: &Display,
+    glsl_version: &str,
+) -> Result<Vec<glium::program::Program>, ProcessingErr> {
     let mut shader_bank = Vec::new();
 
     // basicShapes
     let vsh_bs = "
     #version "
-        .to_owned() + &glsl_version +
-        "
+        .to_owned()
+        + &glsl_version
+        + "
 
     in vec3 position;
     in vec4 color;
@@ -593,8 +582,9 @@ pub fn init_shaders(display: &Display, glsl_version: &str) -> Result<Vec<glium::
 
     let fsh_bs = "
     #version "
-        .to_owned() + &glsl_version +
-        "
+        .to_owned()
+        + &glsl_version
+        + "
 
     in vec4 vColor;
 
@@ -618,14 +608,16 @@ pub fn init_shaders(display: &Display, glsl_version: &str) -> Result<Vec<glium::
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
+    )
+    .map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(bs_program);
 
     // texturedShapes
     let vsh_ts = "
     #version "
-        .to_owned() + &glsl_version +
-        "
+        .to_owned()
+        + &glsl_version
+        + "
 
     in vec3 position;
     in vec4 color;
@@ -648,8 +640,9 @@ pub fn init_shaders(display: &Display, glsl_version: &str) -> Result<Vec<glium::
 
     let fsh_ts = "
     #version "
-        .to_owned() + &glsl_version +
-        "
+        .to_owned()
+        + &glsl_version
+        + "
 
     in vec4 vColor;
     in vec2 Texcoord;
@@ -677,14 +670,16 @@ pub fn init_shaders(display: &Display, glsl_version: &str) -> Result<Vec<glium::
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
+    )
+    .map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(ts_program);
 
     // fontDrawing
     let vsh_fd = "
     #version "
-        .to_owned() + &glsl_version +
-        "
+        .to_owned()
+        + &glsl_version
+        + "
 
     in vec2 position;
     in vec2 texcoord;
@@ -704,8 +699,9 @@ pub fn init_shaders(display: &Display, glsl_version: &str) -> Result<Vec<glium::
 
     let fsh_fd = "
     #version "
-        .to_owned() + &glsl_version +
-        "
+        .to_owned()
+        + &glsl_version
+        + "
 
     in vec2 TexCoord;
 
@@ -736,7 +732,8 @@ pub fn init_shaders(display: &Display, glsl_version: &str) -> Result<Vec<glium::
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
+    )
+    .map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(fd_program);
 
     // text is rendered with an orthographic projection
@@ -774,8 +771,9 @@ pub fn init_shaders(display: &Display, glsl_version: &str) -> Result<Vec<glium::
     // framebuffer
     let vsh_dfb = "
     #version "
-        .to_owned() + &glsl_version +
-        "
+        .to_owned()
+        + &glsl_version
+        + "
 
     in vec2 position;
     in vec2 texcoord;
@@ -792,8 +790,9 @@ pub fn init_shaders(display: &Display, glsl_version: &str) -> Result<Vec<glium::
 
     let fsh_dfb = "
     #version "
-        .to_owned() + &glsl_version +
-        "
+        .to_owned()
+        + &glsl_version
+        + "
 
     in vec2 Texcoord;
 
@@ -820,7 +819,8 @@ pub fn init_shaders(display: &Display, glsl_version: &str) -> Result<Vec<glium::
             outputs_srgb: true,
             uses_point_size: true,
         },
-    ).map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
+    )
+    .map_err(|e| ProcessingErr::ShaderCompileFail(e))?;
     shader_bank.push(dfb_program);
 
     Ok(shader_bank)

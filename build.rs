@@ -8,8 +8,12 @@ extern crate cc;
 
 fn main() {
     if cfg!(target_os = "macos") {
-        cc::Build::new()
-            .file("pri.c")
-            .compile("pri");
+        cc::Build::new().file("pri.c").compile("pri");
+    } else if cfg!(target_os = "windows") {
+        println!(
+            "cargo:rustc-link-search={}",
+            "C:\\Users\\me\\Documents\\source_code\\glfw-3.3.2.bin.WIN64\\lib-vc2019"
+        );
+        println!("cargo:rustc-link-lib=glfw3");
     }
 }
