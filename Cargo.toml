@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 [package]
 name = "processing"
 version = "0.3.2"
@@ -20,12 +19,11 @@ build = "build.rs"
 link = "glfw3"
 
 [dependencies]
-glium = { path = "../glium" }
-gl = "0.6.3"
-
-nalgebra = "0.16.6"
-image = "0.23.0"
-owning_ref = "0.3.3"
+glium = { git = "https://github.com/rennis250/glium", branch = "uni_storage_as_vec" }
+gl = "0.14.0"
+nalgebra = "0.25.4"
+image = "0.23.14"
+owning_ref = "0.4.1"
 
 [build-dependencies]
 cc = "1.0"
@@ -37,9 +35,9 @@ glfwp5 = ["glfw"]
 [dependencies.glfw]
 git = "https://github.com/PistonDevelopers/glfw-rs"
 default-features = false
-# version = "0.22"
-features = ["image", "glfw-sys"]
+features = ["glfw-sys"]
 optional = true
+
 
 [dev-dependencies]
 rand = "0.5.5"
@@ -49,52 +47,3 @@ time = "0.1.38"
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.11.0"
 objc = "0.2.2"
-=======
-[package]
-name = "processing"
-version = "0.3.2"
-authors = ["Robert Ennis <Robert.Ennis@psychol.uni-giessen.de>"]
-description = """
-  An implementation of the Processing environment for Rust, with influences from Cinder and
-  openFrameworks. It is written with Glium and has a Glutin and a GLFW backend. Tested so far
-  on macOS and Linux. It has been developed by Robert Ennis in the lab of Katja Doerschner,
-  a part of the Allgemeine Psychologie Department at the Justus-Liebig Universitaet of Giessen.
-"""
-license = "MIT"
-repository = "https://github.com/rennis250/processing-rs"
-keywords = ["processing", "opengl", "generative", "art", "psychophysics"]
-exclude = [
-  "benches/*",
-  "test.jpg"
-]
-build = "build.rs"
-
-[dependencies]
-glium = { path = "/home/me/my_docs/glium" }
-gl = "0.6.3"
-nalgebra = "0.16.6"
-image = "0.17.0"
-owning_ref = "0.3.3"
-
-[build-dependencies]
-cc = "1.0"
-
-[features]
-default = []
-glfwp5 = ["glfw"]
-
-[dependencies.glfw]
-default-features = false
-version = "0.22"
-features = ["image"]
-optional = true
-
-[dev-dependencies]
-rand = "0.5.5"
-num-traits = "0.1.40"
-time = "0.1.38"
-
-[target.'cfg(target_os = "macos")'.dependencies]
-cocoa = "0.11.0"
-objc = "0.2.2"
->>>>>>> 7cd2ebd8507ec7501c51408c110ab658b20ed8c7
